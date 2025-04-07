@@ -1,6 +1,5 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import uvicorn
 
 from routes.chat import router as chat_router
 from routes.discover import router as discover_router
@@ -23,6 +22,3 @@ app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 app.include_router(discover_router, prefix="/discover", tags=["Discover"])
 app.include_router(history_router, prefix="/history")
 app.include_router(characters_router, prefix="/characters", tags=["Characters"])
-
-if __name__ == "__main__":
-    uvicorn.run("main:app", host="0.0.0.0", port=8000)
