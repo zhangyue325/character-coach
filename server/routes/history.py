@@ -18,14 +18,14 @@ def get_user_file_path(user_id: str, character_id: str) -> str:
     os.makedirs(user_dir, exist_ok=True)  # Create folder if it doesn't exist
     return os.path.join(user_dir, f"{character_id}.json")
 
-@router.post("/{user_id}/{character_id}")
+@router.post("history/{user_id}/{character_id}")
 async def save_history(user_id: str, character_id: str, messages: List[ChatMessage]):
     path = get_user_file_path(user_id, character_id)
     with open(path, "w", encoding="utf-8") as f:
         json.dump([m.dict() for m in messages], f, indent=2, ensure_ascii=False)
     return {"status": "ok"}
 
-@router.get("/{user_id}/{character_id}", response_model=List[ChatMessage])
+@router.get("history/{user_id}/{character_id}", response_model=List[ChatMessage])
 async def get_history(user_id: str, character_id: str):
     path = get_user_file_path(user_id, character_id)
     if not os.path.exists(path):
