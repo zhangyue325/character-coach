@@ -1,0 +1,24 @@
+# node dependencies (react native)
+client/node_modules/
+
+# Expo
+client/.expo/
+client/dist/
+client/web-build/
+client/expo-env.d.ts
+
+# python cache
+server/__pycache__/
+*.pyc
+
+# python envs
+server/venv/
+.env
+*.env
+
+# macOS
+.DS_Store
+*.pem
+
+# vscode code
+.vscode/

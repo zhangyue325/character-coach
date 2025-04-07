@@ -1,0 +1,57 @@
+[
+    {
+      "id": "1",
+      "authorId": "emma",
+      "authorName": "em.mood 🌸",
+      "avatar": "https://i.pravatar.cc/100?img=12",
+      "timestamp": "1h ago",
+      "content": "some things are better said slowly 🌙✨",
+      "image": "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "2",
+      "authorId": "jack",
+      "authorName": "jack.outside 🧭",
+      "avatar": "https://i.pravatar.cc/100?img=8",
+      "timestamp": "3h ago",
+      "content": "learned how to say ‘cheers’ in 5 different languages. now I just need the drinks 🍻",
+      "image": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "3",
+      "authorId": "lily",
+      "authorName": "heyitslily 🔥",
+      "avatar": "https://i.pravatar.cc/100?img=5",
+      "timestamp": "5h ago",
+      "content": "talk to yourself in English. out loud. even if it’s messy. especially if it’s messy 💥🫶",
+      "image": null
+    },
+    {
+      "id": "4",
+      "authorId": "max",
+      "authorName": "syntax.max 🤖",
+      "avatar": "https://i.pravatar.cc/100?img=18",
+      "timestamp": "Yesterday",
+      "content": "do you *actually* know the difference between ‘affect’ and ‘effect’? be honest. 🤖",
+      "image": "https://images.unsplash.com/photo-1557682224-5b8590cd9ec5?auto=format&fit=crop&w=800&q=80"
+    },
+    {
+      "id": "5",
+      "authorId": "bella",
+      "authorName": "bby.bella 🎧",
+      "avatar": "https://i.pravatar.cc/100?img=32",
+      "timestamp": "2d ago",
+      "content": "u ever just vibe to a sentence? like ‘i’m here if you need me’ 🫂🎶",
+      "image": null
+    },
+    {
+      "id": "6",
+      "authorId": "jack",
+      "authorName": "jack.outside 🧭",
+      "avatar": "https://i.pravatar.cc/100?img=8",
+      "timestamp": "2d ago",
+      "content": "‘Where can I buy a SIM card?’ — saved my trip in 6 countries. file that under survival English. 📱🌍",
+      "image": null
+    }
+  ]
+  
