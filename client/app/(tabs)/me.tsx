@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, Platform } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { signOut } from 'firebase/auth';
 import { auth } from '../../firebase';
@@ -8,22 +8,40 @@ export default function MeScreen() {
   const router = useRouter();
   const user = auth.currentUser;
 
-  const handleLogout = () => {
-    Alert.alert('Log Out', 'Are you sure you want to log out?', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Log Out',
-        style: 'destructive',
-        onPress: async () => {
-          await signOut(auth);
-          router.replace('/welcome');
+  // email logout
+  const handleLogout = async () => {
+    console.log('⚠️ Logout clicked');
+  
+    const doLogout = async () => {
+      try {
+        await signOut(auth);
+        router.replace('/welcome');
+      } catch (err) {
+        console.error('❌ Logout failed:', err);
+      }
+    };
+  
+    if (Platform.OS === 'web') {
+      const confirmed = window.confirm('Are you sure you want to log out?');
+      if (confirmed) {
+        await doLogout();
+      }
+    } else {
+      Alert.alert('Log Out', 'Are you sure you want to log out?', [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Log Out',
+          style: 'destructive',
+          onPress: () => {
+            doLogout(); // no async directly in onPress
+          },
         },
-      },
-    ]);
+      ]);
+    }
   };
 
   const handleProfileClick = () => {
-    router.push('/profile-settings'); // 🔁 Make sure this screen exists
+    router.push('/me'); // 🔁 Make sure this screen exists
   };
 
   return (
