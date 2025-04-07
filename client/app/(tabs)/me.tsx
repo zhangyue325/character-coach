@@ -1,45 +1,46 @@
-import { View, Text, StyleSheet, Image, FlatList, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const user = {
-  name: 'Alex Learner',
-  avatar: 'https://i.pravatar.cc/100?img=60',
-  level: 'Intermediate',
-  streak: 12,
-  saved: 5,
-};
-
-const settings = [
-  { id: '1', icon: 'person-outline', label: 'Profile Settings' },
-  { id: '2', icon: 'bookmarks-outline', label: 'Saved Posts' },
-  { id: '3', icon: 'notifications-outline', label: 'Notifications' },
-  { id: '4', icon: 'color-palette-outline', label: 'Theme' },
-  { id: '5', icon: 'log-out-outline', label: 'Log Out' },
-];
+import { signOut } from 'firebase/auth';
+import { auth } from '../../firebase';
+import { useRouter } from 'expo-router';
 
 export default function MeScreen() {
+  const router = useRouter();
+  const user = auth.currentUser;
+
+  const handleLogout = () => {
+    Alert.alert('Log Out', 'Are you sure you want to log out?', [
+      { text: 'Cancel', style: 'cancel' },
+      {
+        text: 'Log Out',
+        style: 'destructive',
+        onPress: async () => {
+          await signOut(auth);
+          router.replace('/welcome');
+        },
+      },
+    ]);
+  };
+
+  const handleProfileClick = () => {
+    router.push('/profile-settings'); // 🔁 Make sure this screen exists
+  };
+
   return (
     <View style={styles.container}>
-      <View style={styles.profile}>
-        <Image source={{ uri: user.avatar }} style={styles.avatar} />
+      <TouchableOpacity style={styles.profile} onPress={handleProfileClick}>
+        <Image source={{ uri: user?.photoURL || 'https://i.pravatar.cc/100?img=60' }} style={styles.avatar} />
         <View>
-          <Text style={styles.name}>{user.name}</Text>
-          <Text style={styles.level}>Level: {user.level}</Text>
-          <Text style={styles.streak}>🔥 Streak: {user.streak} days</Text>
+          <Text style={styles.name}>{user?.displayName || 'Anonymous'}</Text>
+          <Text style={styles.email}>{user?.email}</Text>
         </View>
-      </View>
+        <Ionicons name="chevron-forward" size={20} color="#999" style={{ marginLeft: 'auto' }} />
+      </TouchableOpacity>
 
-      <FlatList
-        data={settings}
-        keyExtractor={item => item.id}
-        contentContainerStyle={{ marginTop: 20 }}
-        renderItem={({ item }) => (
-          <TouchableOpacity style={styles.settingRow}>
-            <Ionicons name={item.icon as any} size={22} color="#333" style={{ marginRight: 12 }} />
-            <Text style={styles.settingLabel}>{item.label}</Text>
-          </TouchableOpacity>
-        )}
-      />
+      <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
+        <Ionicons name="log-out-outline" size={22} color="#000" style={{ marginRight: 8 }} />
+        <Text style={styles.logoutText}>Log Out</Text>
+      </TouchableOpacity>
     </View>
   );
 }
@@ -61,17 +62,20 @@ const styles = StyleSheet.create({
     marginRight: 16,
   },
   name: { fontSize: 18, fontWeight: 'bold' },
-  level: { fontSize: 14, color: '#555', marginTop: 4 },
-  streak: { fontSize: 14, color: '#777', marginTop: 2 },
-  settingRow: {
+  email: { fontSize: 14, color: '#666', marginTop: 4 },
+  logoutBtn: {
     flexDirection: 'row',
     alignItems: 'center',
+    marginTop: 40,
+    alignSelf: 'center',
     backgroundColor: '#fff',
     paddingVertical: 14,
-    paddingHorizontal: 16,
+    paddingHorizontal: 24,
     borderRadius: 10,
-    marginBottom: 12,
     elevation: 1,
   },
-  settingLabel: { fontSize: 16 },
+  logoutText: {
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
 });
