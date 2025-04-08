@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { SERVER_URL } from '../../config';
+import { ref, get } from 'firebase/database';
+import { db } from '../../firebase'; 
 
 type Character = {
   id: string;
@@ -24,12 +26,29 @@ export default function CharacterList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${SERVER_URL}/characters`)
-      .then(res => res.json())
-      .then(data => setCharacters(data))
-      .catch(err => console.error('Failed to load characters:', err))
-      .finally(() => setLoading(false));
+    const fetchCharacters = async () => {
+      try {
+        const snapshot = await get(ref(db, 'characters'));
+        console.log('📦 Raw snapshot:', snapshot.val());
+  
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const postArray = Array.isArray(data) ? data : Object.values(data);
+          setCharacters(postArray);
+        } else {
+          console.log('⚠️ No data at /characters');
+          setCharacters([]);
+        }
+      } catch (err) {
+        console.error('❌ Firebase fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchCharacters();
   }, []);
+
 
   if (loading) {
     return (

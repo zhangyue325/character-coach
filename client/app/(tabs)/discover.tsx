@@ -8,7 +8,8 @@ import {
   Dimensions,
   ActivityIndicator,
 } from 'react-native';
-import { SERVER_URL } from '../../config';
+import { ref, get } from 'firebase/database';
+import { db } from '../../firebase'; 
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -27,15 +28,29 @@ export default function DiscoverScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${SERVER_URL}/discover`) 
-      .then(res => res.json())
-      .then(data => setPosts(data))
-      .catch(err => {
-        console.error('Failed to fetch discover posts:', err);
-      })
-      .finally(() => setLoading(false));
+    const fetchPosts = async () => {
+      try {
+        const snapshot = await get(ref(db, 'posts'));
+        console.log('📦 Raw snapshot:', snapshot.val());
+  
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const postArray = Array.isArray(data) ? data : Object.values(data);
+          setPosts(postArray);
+        } else {
+          console.log('⚠️ No data at /post');
+          setPosts([]);
+        }
+      } catch (err) {
+        console.error('❌ Firebase fetch error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+  
+    fetchPosts();
   }, []);
-
+  
   if (loading) {
     return (
       <View style={styles.loading}>

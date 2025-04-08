@@ -1,6 +1,6 @@
 import type { Message } from './types';
-import { SERVER_URL } from '../../config';
-import { auth } from '../../firebase';
+import { db, auth } from '../../firebase';
+import { ref, get, set } from 'firebase/database';
 
 const getUserId = () => {
   const user = auth.currentUser;
@@ -11,10 +11,14 @@ const getUserId = () => {
 export const getMessages = async (characterId: string): Promise<Message[]> => {
   try {
     const userId = getUserId();
-    const res = await fetch(`${SERVER_URL}/history/${userId}/${characterId}`);
-    if (!res.ok) throw new Error('Failed to load history');
-    const data = await res.json();
-    return data;
+    const path = `messages/${userId}/${characterId}`;
+    const snapshot = await get(ref(db, path));
+
+    if (snapshot.exists()) {
+      return snapshot.val();
+    } else {
+      return [];
+    }
   } catch (err) {
     console.error('getMessages error:', err);
     return [];
@@ -24,11 +28,8 @@ export const getMessages = async (characterId: string): Promise<Message[]> => {
 export const saveMessages = async (characterId: string, messages: Message[]) => {
   try {
     const userId = getUserId();
-    await fetch(`${SERVER_URL}/history/${userId}/${characterId}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messages),
-    });
+    const path = `messages/${userId}/${characterId}`;
+    await set(ref(db, path), messages);
   } catch (err) {
     console.error('saveMessages error:', err);
   }
