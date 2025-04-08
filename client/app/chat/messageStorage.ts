@@ -1,6 +1,13 @@
-import type { Message } from './types';
 import { db, auth } from '../../firebase';
 import { ref, get, set } from 'firebase/database';
+
+export type Message = {
+  role: 'user' | 'assistant';
+  type: 'text' | 'audio';
+  text?: string,
+  audioUrl?: string,
+  timestamp: number
+};
 
 const getUserId = () => {
   const user = auth.currentUser;
@@ -15,7 +22,14 @@ export const getMessages = async (characterId: string): Promise<Message[]> => {
     const snapshot = await get(ref(db, path));
 
     if (snapshot.exists()) {
-      return snapshot.val();
+      const data = snapshot.val();
+
+      // Firebase might return an object if data was saved as {0: {...}, 1: {...}} instead of an array
+      if (Array.isArray(data)) {
+        return data;
+      } else {
+        return Object.values(data) as Message[];
+      }
     } else {
       return [];
     }
@@ -34,3 +48,5 @@ export const saveMessages = async (characterId: string, messages: Message[]) => 
     console.error('saveMessages error:', err);
   }
 };
+
+

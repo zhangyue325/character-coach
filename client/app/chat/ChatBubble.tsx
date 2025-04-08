@@ -1,6 +1,6 @@
 import { View, Text, StyleSheet, Image } from 'react-native';
 import React from 'react';
-import type { Message } from './types';
+import type { Message } from './messageStorage';
 
 export default function ChatBubble({
   message,
@@ -22,7 +22,10 @@ export default function ChatBubble({
         <Image source={{ uri: avatar }} style={styles.avatar} />
       )}
       <View style={[styles.bubble, isUser ? styles.user : styles.ai]}>
-        <Text>{message.content}</Text>
+        {message.type === 'text' && <Text>{message.text}</Text>}
+        {message.type === 'audio' && (
+          <Text style={{ fontStyle: 'italic', color: '#555' }}>🔊 Voice message</Text>
+        )}
       </View>
     </View>
   );

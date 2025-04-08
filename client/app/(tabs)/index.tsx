@@ -9,7 +9,6 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Link } from 'expo-router';
-import { SERVER_URL } from '../../config';
 import { ref, get } from 'firebase/database';
 import { db } from '../../firebase'; 
 
@@ -29,12 +28,14 @@ export default function CharacterList() {
     const fetchCharacters = async () => {
       try {
         const snapshot = await get(ref(db, 'characters'));
-        console.log('📦 Raw snapshot:', snapshot.val());
   
         if (snapshot.exists()) {
           const data = snapshot.val();
-          const postArray = Array.isArray(data) ? data : Object.values(data);
-          setCharacters(postArray);
+          const characterArray = Object.entries(data).map(([key, value]: [string, any]) => ({
+            id: key,
+            ...value,
+          }));
+          setCharacters(characterArray);  
         } else {
           console.log('⚠️ No data at /characters');
           setCharacters([]);
@@ -48,7 +49,7 @@ export default function CharacterList() {
   
     fetchCharacters();
   }, []);
-
+  
 
   if (loading) {
     return (
@@ -66,7 +67,7 @@ export default function CharacterList() {
       contentContainerStyle={styles.listContainer}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
       renderItem={({ item }) => (
-        <Link href={{ pathname: '/chats/[id]', params: { id: item.id } }} asChild>
+        <Link href={{ pathname: '/chat/[id]', params: { id: item.id } }} asChild>
           <Pressable style={styles.card}>
             <Image source={{ uri: item.avatar }} style={styles.avatar} />
             <View>

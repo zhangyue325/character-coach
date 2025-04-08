@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import List, Literal
+from typing import List, Literal, Optional
 from openai import OpenAI
 import os
 import json
@@ -9,10 +9,10 @@ from dotenv import load_dotenv
 load_dotenv()
 router = APIRouter()
 
-# Load API key from environment
+# Initialize OpenAI client
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# === Load characters ===
+# === Load character data ===
 def load_characters():
     with open("data/character.json", "r", encoding="utf-8") as f:
         return json.load(f)
@@ -25,22 +25,22 @@ def get_prompt_by_id(character_id: str) -> str:
             return char["prompt"]
     raise HTTPException(status_code=404, detail="Character not found")
 
-# === Request model ===
+# === Models ===
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
     content: str
 
 class ChatRequest(BaseModel):
     characterId: str
-    messages: List[ChatMessage]
+    messages: Optional[List[ChatMessage]] = []
 
-# === POST /chat endpoint ===
+# === POST /chat ===
 @router.post("")
 async def chat(req: ChatRequest):
     try:
         prompt = get_prompt_by_id(req.characterId)
 
-        recent_messages = req.messages[-5:]
+        recent_messages = req.messages[-5:] if req.messages else []
         messages = [{"role": "system", "content": prompt}] + recent_messages
 
         response = client.chat.completions.create(

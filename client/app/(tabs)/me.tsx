@@ -8,7 +8,7 @@ export default function MeScreen() {
   const router = useRouter();
   const user = auth.currentUser;
 
-  // email logout
+  // email logout 
   const handleLogout = async () => {
     console.log('⚠️ Logout clicked');
   
