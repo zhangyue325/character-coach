@@ -5,11 +5,12 @@ import {
   View,
   Platform,
   Text,
-  FlatList, 
+  FlatList,
   SafeAreaView,
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ref, get } from 'firebase/database';
@@ -40,7 +41,6 @@ export default function CharacterChatScreen() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  // 🔁 Load character from Firebase
   const fetchCharacter = async (charId: string): Promise<Character> => {
     const snapshot = await get(ref(db, `characters/${charId}`));
     if (!snapshot.exists()) throw new Error('Character not found');
@@ -62,7 +62,6 @@ export default function CharacterChatScreen() {
     init();
   }, [id]);
 
-  // 🔁 Setup title bar and load history
   useEffect(() => {
     if (!character || typeof id !== 'string') return;
 
@@ -103,14 +102,12 @@ export default function CharacterChatScreen() {
     loadHistory();
   }, [character]);
 
-  // 🔁 Save history on change
   useEffect(() => {
     if (id && messages.length > 0 && typeof id === 'string') {
       saveMessages(id, messages);
     }
   }, [messages]);
 
-  // ✅ Send user message and get AI reply
   const sendMessage = async () => {
     if (!input.trim() || !character || typeof id !== 'string') return;
 
@@ -125,13 +122,13 @@ export default function CharacterChatScreen() {
     setInput('');
     setLoading(true);
 
-    // this is for ai response 
     try {
       const res = await fetch(`${SERVER_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           characterId: id,
+          messages: messages.slice(-5),
         }),
       });
 
@@ -161,6 +158,11 @@ export default function CharacterChatScreen() {
     }
   };
 
+  const handleVoicePress = () => {
+    Alert.alert('🎤 Voice mode', 'Start voice input (recording not implemented yet)');
+    // You can replace this with voice SDK logic (e.g., react-native-voice)
+  };
+
   if (!character) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -170,13 +172,12 @@ export default function CharacterChatScreen() {
     );
   }
 
-
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: '#fff' }}>
       <KeyboardAvoidingView
         style={{ flex: 1 }}
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={90} // adjust based on your header height
+        keyboardVerticalOffset={90}
       >
         <View style={{ flex: 1 }}>
           <FlatList
@@ -195,14 +196,19 @@ export default function CharacterChatScreen() {
             input={input}
             onChange={setInput}
             onSend={sendMessage}
-            loading={loading}
-            onVoicePress={() => {
-              console.log('🎤 Start recording... (not yet implemented)');
+            onStartVoice={() => {
+              console.log('🎙️ Start recording...');
+              // TODO: Start voice SDK recording
             }}
+            onStopVoice={() => {
+              console.log('🛑 Stop recording...');
+              // TODO: Stop recording and process result
+            }}
+            loading={loading}
           />
+
         </View>
       </KeyboardAvoidingView>
     </SafeAreaView>
   );
-  
 }

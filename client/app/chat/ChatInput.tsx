@@ -1,19 +1,21 @@
+import React, { useState } from 'react';
 import {
   View,
   TextInput,
-  StyleSheet,
-  KeyboardAvoidingView,
-  Platform,
   TouchableOpacity,
+  StyleSheet,
+  Text,
+  Platform,
+  GestureResponderEvent,
 } from 'react-native';
-import React from 'react';
 import { Ionicons } from '@expo/vector-icons';
 
 type Props = {
   input: string;
   onChange: (text: string) => void;
   onSend: () => void;
-  onVoicePress: () => void; // ✅ new prop
+  onStartVoice: (e: GestureResponderEvent) => void;
+  onStopVoice: (e: GestureResponderEvent) => void;
   loading: boolean;
 };
 
@@ -21,41 +23,58 @@ export default function ChatInput({
   input,
   onChange,
   onSend,
-  onVoicePress,
+  onStartVoice,
+  onStopVoice,
   loading,
 }: Props) {
+  const [mode, setMode] = useState<'voice' | 'text'>('voice');
+
+  const toggleMode = () => {
+    setMode(prev => (prev === 'voice' ? 'text' : 'voice'));
+  };
+
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-      keyboardVerticalOffset={90}
-      style={styles.inputBar}
-    >
-      {/* 🎙️ Voice input button */}
-      <TouchableOpacity style={styles.voiceButton} onPress={onVoicePress}>
-        <Ionicons name="mic-outline" size={24} color="#555" />
+    <View style={styles.container}>
+      {/* Mode Switcher */}
+      <TouchableOpacity style={styles.iconButton} onPress={toggleMode}>
+        <Ionicons name={mode === 'voice' ? 'mic' : 'chatbubble'} size={24} color="#333" />
       </TouchableOpacity>
 
-      <TextInput
-        style={styles.input}
-        placeholder="Type a message..."
-        value={input}
-        onChangeText={onChange}
-        editable={!loading}
-      />
+      {/* Input Area */}
+      <View style={styles.middle}>
+        {mode === 'text' ? (
+          <TextInput
+            style={styles.textInput}
+            placeholder="Type a message"
+            value={input}
+            onChangeText={onChange}
+            editable={!loading}
+          />
+        ) : (
+          <TouchableOpacity
+            style={styles.voiceBar}
+            onPressIn={onStartVoice}
+            onPressOut={onStopVoice}
+          >
+            <Text style={styles.voiceText}>🎤 Hold to speak</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
+      {/* Send Button */}
       <TouchableOpacity
-        style={styles.sendButton}
+        style={[styles.sendButton, loading && { opacity: 0.5 }]}
         onPress={onSend}
-        disabled={loading || !input.trim()}
+        disabled={loading || (mode === 'text' && !input.trim())}
       >
         <Ionicons name="send" size={20} color="#fff" />
       </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  inputBar: {
+  container: {
     flexDirection: 'row',
     padding: 12,
     borderTopWidth: 1,
@@ -63,19 +82,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#fff',
   },
-  voiceButton: {
-    marginRight: 8,
+  iconButton: {
+    padding: 8,
   },
-  input: {
+  middle: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ccc',
+    marginHorizontal: 10,
+  },
+  textInput: {
+    backgroundColor: '#f1f1f1',
     borderRadius: 20,
-    paddingHorizontal: 14,
     paddingVertical: Platform.OS === 'ios' ? 10 : 8,
-    marginRight: 10,
+    paddingHorizontal: 14,
     fontSize: 16,
-    backgroundColor: '#f9f9f9',
+  },
+  voiceBar: {
+    backgroundColor: '#e0e0e0',
+    borderRadius: 20,
+    paddingVertical: 12,
+    alignItems: 'center',
+  },
+  voiceText: {
+    color: '#555',
+    fontSize: 14,
   },
   sendButton: {
     backgroundColor: '#007aff',
