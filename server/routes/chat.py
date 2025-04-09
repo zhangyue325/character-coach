@@ -13,6 +13,7 @@ router = APIRouter()
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
 # === Load character data ===
+# need use firebase instead
 def load_characters():
     with open("data/character.json", "r", encoding="utf-8") as f:
         return json.load(f)
