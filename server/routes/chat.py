@@ -6,25 +6,30 @@ import os
 import json
 from dotenv import load_dotenv
 
+import firebase_admin
+from firebase_admin import credentials, db
+
 load_dotenv()
 router = APIRouter()
 
-# Initialize OpenAI client
+# === Initialize OpenAI ===
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# === Load character data ===
-# need use firebase instead
-def load_characters():
-    with open("data/character.json", "r", encoding="utf-8") as f:
-        return json.load(f)
+# === Initialize Firebase ===
+if not firebase_admin._apps:
+    cred = credentials.Certificate("../firebase_key.json")  # path to your private key
+    firebase_admin.initialize_app(cred, {
+        "databaseURL": "https://character-coach-default-rtdb.asia-southeast1.firebasedatabase.app/"
+    })
 
-CHARACTER_DATA = load_characters()
-
+# === Get character prompt from Firebase ===
 def get_prompt_by_id(character_id: str) -> str:
-    for char in CHARACTER_DATA:
-        if char["id"] == character_id:
-            return char["prompt"]
-    raise HTTPException(status_code=404, detail="Character not found")
+    ref = db.reference(f"characters/{character_id}")
+    data = ref.get()
+
+    if data and "prompt" in data:
+        return data["prompt"]
+    raise HTTPException(status_code=404, detail="Character not found in Firebase")
 
 # === Models ===
 class ChatMessage(BaseModel):
