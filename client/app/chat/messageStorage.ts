@@ -5,7 +5,7 @@ export type Message = {
   role: 'user' | 'assistant';
   type: 'text' | 'audio';
   text?: string,
-  audioUrl?: string,
+  audioUri?: string,
   timestamp: number
 };
 
@@ -39,6 +39,7 @@ export const getMessages = async (characterId: string): Promise<Message[]> => {
   }
 };
 
+
 export const saveMessages = async (characterId: string, messages: Message[]) => {
   try {
     const userId = getUserId();
@@ -48,5 +49,4 @@ export const saveMessages = async (characterId: string, messages: Message[]) => 
     console.error('saveMessages error:', err);
   }
 };
-
 

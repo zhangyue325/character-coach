@@ -1,126 +1,119 @@
-import { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
-  FlatList,
-  Pressable,
   StyleSheet,
+  FlatList,
+  TouchableOpacity,
   Image,
-  ActivityIndicator,
+  SafeAreaView,
 } from 'react-native';
-import { Link } from 'expo-router';
-import { ref, get } from 'firebase/database';
-import { db } from '../../firebase'; 
+import { router } from 'expo-router';
 
-type Character = {
-  id: string;
-  name: string;
-  role: string;
-  avatar: string;
-  description: string;
-};
+const testImageUrl = 'https://via.placeholder.com/300x200.png?text=Role+Play';
 
-export default function CharacterList() {
-  const [characters, setCharacters] = useState<Character[]>([]);
-  const [loading, setLoading] = useState(true);
+const rolePlays = [
+  { title: 'Job interview', character_id: 'emma', character_name: 'Emma', image: { uri: testImageUrl }, id: 'job-interview' },
+  { title: 'Hotel check-in', character_id: 'max', character_name: 'Max', image: { uri: testImageUrl }, id: 'hotel-check-in' },
+  { title: 'Meeting new people', character_id: 'lily', character_name: 'Lily', image: { uri: testImageUrl }, id: 'meeting-new-people' },
+];
 
-  useEffect(() => {
-    const fetchCharacters = async () => {
-      try {
-        const snapshot = await get(ref(db, 'characters'));
-  
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const characterArray = Object.entries(data).map(([key, value]: [string, any]) => ({
-            id: key,
-            ...value,
-          }));
-          setCharacters(characterArray);  
-        } else {
-          console.log('⚠️ No data at /characters');
-          setCharacters([]);
-        }
-      } catch (err) {
-        console.error('❌ Firebase fetch error:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-  
-    fetchCharacters();
-  }, []);
-  
+export default function HomeScreen() {
+  const [activeTab, setActiveTab] = useState('For you');
+  const tabs = ['For you', 'Popular', 'Practice again'];
 
-  if (loading) {
-    return (
-      <View style={styles.loading}>
-        <ActivityIndicator size="large" />
-        <Text>Loading characters...</Text>
-      </View>
-    );
-  }
+  const handlePress = (id: string, character_id: string) => {
+    router.push({
+      pathname: '/chat/[id]',
+      params: {
+        id,
+        character_id,
+      },
+    } as const);
+  };
+
+  const renderItem = ({ item }: { item: typeof rolePlays[0] }) => (
+    <TouchableOpacity style={styles.card} onPress={() => handlePress(item.id, item.character_id)}>
+      <Image source={item.image} style={styles.image} />
+      <Text style={styles.cardTitle}>{item.title}</Text>
+      <Text >{item.character_name}</Text>
+    </TouchableOpacity>
+  );
 
   return (
-    <FlatList
-      data={characters}
-      keyExtractor={item => item.id}
-      contentContainerStyle={styles.listContainer}
-      ItemSeparatorComponent={() => <View style={styles.separator} />}
-      renderItem={({ item }) => (
-        <Link href={{ pathname: '/chat/[id]', params: { id: item.id } }} asChild>
-          <Pressable style={styles.card}>
-            <Image source={{ uri: item.avatar }} style={styles.avatar} />
-            <View>
-              <Text style={styles.name}>{item.name}</Text>
-              <Text style={styles.role}>{item.role}</Text>
-              <Text style={styles.description}>{item.description}</Text>
-            </View>
-          </Pressable>
-        </Link>
-      )}
-    />
+    <SafeAreaView style={styles.container}>
+      <Text style={styles.title}>Role-play</Text>
+
+      <View style={styles.tabContainer}>
+        {tabs.map((tab) => (
+          <TouchableOpacity
+            key={tab}
+            onPress={() => setActiveTab(tab)}
+            style={[styles.tab, activeTab === tab && styles.activeTab]}
+          >
+            <Text style={[styles.tabText, activeTab === tab && styles.activeTabText]}>
+              {tab}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+
+      <FlatList
+        data={rolePlays}
+        keyExtractor={(item) => item.id}
+        numColumns={2}
+        columnWrapperStyle={styles.row}
+        contentContainerStyle={styles.grid}
+        renderItem={renderItem}
+      />
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  loading: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
+  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
+  tabContainer: {
+    flexDirection: 'row',
+    marginBottom: 16,
   },
-  listContainer: {
-    paddingTop: 16,
-    paddingBottom: 80, // keeps content clear of tab bar
-    paddingHorizontal: 16,
+  tab: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    borderRadius: 16,
+    backgroundColor: '#f0f0f0',
+    marginRight: 8,
   },
-  separator: {
-    height: 1,
-    backgroundColor: '#e0e0e0',
-    marginVertical: 12,
+  activeTab: {
+    backgroundColor: '#333',
+  },
+  tabText: {
+    color: '#333',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  row: {
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  grid: {
+    paddingBottom: 80,
   },
   card: {
-    flexDirection: 'row',
-    padding: 12,
-    borderRadius: 8,
-    backgroundColor: '#f2f2f2',
-    alignItems: 'center',
+    width: '48%',
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#f9f9f9',
   },
-  avatar: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
-    marginRight: 12,
+  image: {
+    width: '100%',
+    height: 120,
+    backgroundColor: '#e0e0e0',
   },
-  name: {
-    fontWeight: 'bold',
+  cardTitle: {
+    padding: 8,
     fontSize: 16,
-  },
-  role: {
-    fontSize: 14,
-    color: '#666',
-  },
-  description: {
-    fontSize: 12,
-    color: '#999',
+    fontWeight: '500',
   },
 });
