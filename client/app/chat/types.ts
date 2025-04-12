@@ -7,12 +7,13 @@ export type RolePlay = {
   prompt: string;
   cover: string;
   greet: string;
+  greetaudio: string;
 };
 
 export type Message = {
   role: 'user' | 'assistant';
   type: 'text' | 'audio';
-  text?: string,
-  audioUri?: string,
-  timestamp: number,
+  content: string;
+  audioUri?: string;
+  timestamp: number;
 };

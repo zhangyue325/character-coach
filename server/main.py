@@ -5,6 +5,7 @@ import os
 
 from routes.chat import router as chat_router
 from routes.tts import router as text_to_speech
+from routes.whisper import router as whisper_router
 
 # this is for testing
 # uvicorn main:app --reload
@@ -23,3 +24,4 @@ app.add_middleware(
 
 app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 app.include_router(text_to_speech, prefix="/tts", tags=["TTS"])
+app.include_router(whisper_router, prefix="/whisper_router", tags=["Whisper"])

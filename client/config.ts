@@ -1,3 +1,1 @@
-const LOCAL_IP = 'https://character-coach.onrender.com';
-
-export const SERVER_URL = LOCAL_IP;
+export const SERVER_URL = "http://127.0.0.1:8000";

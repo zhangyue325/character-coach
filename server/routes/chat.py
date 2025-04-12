@@ -1,16 +1,12 @@
 from fastapi import APIRouter, HTTPException
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Literal, Optional
 from openai import OpenAI
 import os
-import json
 from dotenv import load_dotenv
-from fastapi.responses import JSONResponse
 import uuid
 
-
-import firebase_admin
-from firebase_admin import credentials, db
 
 load_dotenv()
 router = APIRouter()
@@ -18,17 +14,13 @@ router = APIRouter()
 # === Initialize OpenAI ===
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# === Initialize Firebase ===
-if not firebase_admin._apps:
-    cred = credentials.Certificate("firebase_key.json")  # path to your private key
-    firebase_admin.initialize_app(cred, {
-        "databaseURL": "https://character-coach-default-rtdb.asia-southeast1.firebasedatabase.app/"
-    })
-
 # === Models ===
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
+    type: str
     content: str
+    audioUri: str
+    timestamp: int
 
 class ChatRequest(BaseModel):
     messages: Optional[List[ChatMessage]] = []

@@ -45,7 +45,9 @@ export default function ChatBubble({
 
         {/* Message Block */}
         <View style={[styles.bubble, isUser ? styles.user : styles.ai]}>
-          <Text style={styles.text}>{message.text}</Text>
+          {typeof message.content === 'string' && message.content.trim() !== '' && (
+            <Text style={styles.text}>{message.content}</Text>
+          )}
 
           <View style={styles.buttonRow}>
             {/* Left Button */}

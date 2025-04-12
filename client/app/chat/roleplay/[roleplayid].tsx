@@ -16,6 +16,7 @@ import { ref, get } from 'firebase/database';
 
 import ChatBubble from '../../chat/ChatBubble';
 import ChatInput from '../../chat/ChatInput';
+import { playAudioFromUri } from '../../chat/audioPlay';
 import { getMessages, saveMessages  } from '../../chat/messageStorage';
 import { SERVER_URL } from '../../../config';
 import { db } from '../../../firebase';
@@ -51,10 +52,13 @@ export default function RolePlayChatScreen() {
           const greetingMsg: Message = {
             role: 'assistant',
             type: 'text',
-            text: data.greet,
+            content: data.greet,
             timestamp: Date.now(),
-            audioUri: "https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3",
+            audioUri: data.greetaudio,
           };
+          if (data.greetaudio) {
+            await playAudioFromUri(data.greetaudio);
+          }
           setMessages([greetingMsg]);
         }
     
@@ -89,11 +93,11 @@ export default function RolePlayChatScreen() {
     });
   }, [rolePlay]);
 
-  useEffect(() => {
-    if (roleplayid && messages.length > 0 && typeof roleplayid === 'string') {
-      saveMessages(roleplayid, messages);
-    }
-  }, [messages]);
+  // useEffect(() => {
+  //   if (roleplayid && messages.length > 0 && typeof roleplayid === 'string') {
+  //     saveMessages(roleplayid, messages);
+  //   }
+  // }, [messages]);
 
   const sendMessage = async () => {
     if (!input.trim() || !rolePlay || typeof roleplayid !== 'string') return;
@@ -101,7 +105,7 @@ export default function RolePlayChatScreen() {
     const userMsg: Message = {
       role: 'user',
       type: 'text',
-      text: input,
+      content: input,
       timestamp: Date.now(),
       audioUri: 'https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3'
     };
@@ -110,12 +114,19 @@ export default function RolePlayChatScreen() {
     setInput('');
     setLoading(true);
 
+    const formattedMessages = messages.slice(-5).map((m) => ({
+      role: m.role,
+      type: m.type,
+      content: m.content ?? '',
+      audioUri: m.audioUri ?? '',
+      timestamp: m.timestamp,
+    }));
     try {
       const res = await fetch(`${SERVER_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          messages: messages.slice(-5),
+          messages: formattedMessages,
           prompt: rolePlay.prompt,
         }),
       });
@@ -124,12 +135,15 @@ export default function RolePlayChatScreen() {
       const aiMsg: Message = {
         role: 'assistant',
         type: 'text',
-        text: data.reply || 'No reply received.',
+        content: data.reply || 'No reply received.',
         timestamp: Date.now(),
-        audioUri: data.audioUrl,
+        audioUri: `${SERVER_URL}${data.audioUrl}` || '',
       };
 
       setMessages(prev => [...prev, aiMsg]);
+      if (aiMsg.audioUri) {
+        await playAudioFromUri(aiMsg.audioUri);
+      }
     } catch (err) {
       console.error('❌ Backend error:', err);
       setMessages(prev => [
@@ -137,7 +151,7 @@ export default function RolePlayChatScreen() {
         {
           role: 'assistant',
           type: 'text',
-          text: '⚠️ Failed to get response from server.',
+          content: '⚠️ Failed to get response from server.',
           timestamp: Date.now(),
         },
       ]);
