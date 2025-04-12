@@ -70,10 +70,6 @@ async def chat(req: ChatRequest):
 
         filename = f"reply_{uuid.uuid4().hex}.mp3"
         filepath = f"static/audio/{filename}"
-
-        # Make sure the folder exists
-        os.makedirs("static/audio", exist_ok=True)
-
         with open(filepath, "wb") as f:
             f.write(tts_response.content)
 

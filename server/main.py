@@ -9,7 +9,6 @@ from routes.chat import router as chat_router
 from routes.tts import router as text_to_speech
 
 app = FastAPI()
-app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
