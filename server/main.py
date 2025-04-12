@@ -1,12 +1,15 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+
+# this is for testing
+# uvicorn main:app --reload
 
 from routes.chat import router as chat_router
 from routes.tts import router as text_to_speech
 
-# server % uvicorn main:app --host 0.0.0.0 --port 8000
-
 app = FastAPI()
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
     CORSMiddleware,
