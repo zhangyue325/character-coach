@@ -1,13 +1,7 @@
 import { db, auth } from '../../firebase';
 import { ref, get, set } from 'firebase/database';
+import type { Message } from './types';
 
-export type Message = {
-  role: 'user' | 'assistant';
-  type: 'text' | 'audio';
-  text?: string,
-  audioUri?: string,
-  timestamp: number
-};
 
 const getUserId = () => {
   const user = auth.currentUser;

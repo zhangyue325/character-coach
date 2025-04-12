@@ -13,15 +13,7 @@ import { router } from 'expo-router';
 import { ref, get } from 'firebase/database';
 import { db } from '../../firebase'; // adjust path to your Firebase config
 
-type RolePlay = {
-  id: string;
-  title: string;
-  cover: string;
-  description: string;
-  character: string;
-  avatar: string;
-  prompt: string;
-};
+import type { RolePlay } from '../chat/types';
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('For you');
@@ -77,7 +69,6 @@ export default function HomeScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <br />
       <View style={styles.tabContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity

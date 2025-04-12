@@ -41,7 +41,7 @@ class ChatRequest(BaseModel):
     messages: Optional[List[ChatMessage]] = []
 
 # === POST /chat ===
-@router.post("")
+@router.post("/chat")
 async def chat(req: ChatRequest):
     try:
         prompt = get_prompt_by_id(req.characterId)

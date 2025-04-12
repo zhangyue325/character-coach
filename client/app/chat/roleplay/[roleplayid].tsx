@@ -13,24 +13,15 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ref, get } from 'firebase/database';
-import { db } from '../../../firebase';
 
 import ChatBubble from '../../chat/ChatBubble';
 import ChatInput from '../../chat/ChatInput';
-import { getMessages, saveMessages, Message } from '../../chat/messageStorage';
+import { getMessages, saveMessages  } from '../../chat/messageStorage';
 import { SERVER_URL } from '../../../config';
+import { db } from '../../../firebase';
 
-type RolePlay = {
-  id: string;
-  title: string;
-  description: string;
-  character: string;
-  avatar: string;
-  prompt: string;
-  cover: string;
-  greet: string;
-  greet_audio: string
-};
+import type { RolePlay, Message }  from '../types';
+
 
 export default function RolePlayChatScreen() {
   const { roleplayid } = useLocalSearchParams();
@@ -62,7 +53,7 @@ export default function RolePlayChatScreen() {
             type: 'text',
             text: data.greet,
             timestamp: Date.now(),
-            audioUri: data.greet_audio,
+            audioUri: "https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3",
           };
           setMessages([greetingMsg]);
         }
@@ -96,8 +87,6 @@ export default function RolePlayChatScreen() {
         />
       ),
     });
-
-    // history ignored here
   }, [rolePlay]);
 
   useEffect(() => {
@@ -114,9 +103,8 @@ export default function RolePlayChatScreen() {
       type: 'text',
       text: input,
       timestamp: Date.now(),
+      audioUri: 'https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3'
     };
-
-    console.log('📤 Sending user message:', userMsg);
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
@@ -128,7 +116,7 @@ export default function RolePlayChatScreen() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           characterId: rolePlay.character,
-          messages: messages.slice(-5),
+          // messages: messages.slice(-5),
           prompt: rolePlay.prompt,
         }),
       });
@@ -139,7 +127,7 @@ export default function RolePlayChatScreen() {
         type: 'text',
         text: data.reply || 'No reply received.',
         timestamp: Date.now(),
-        audioUri: data.audioUrl || undefined,
+        audioUri: 'https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3',
       };
 
       setMessages(prev => [...prev, aiMsg]);

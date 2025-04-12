@@ -1,16 +1,15 @@
 import { View, Text, StyleSheet, Image, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
 import React, { useState } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import type { Message } from './messageStorage';
+import type { Message } from './types';
+import { playAudioFromUri } from './audioPlay';
 
 export default function ChatBubble({
   message,
-  avatar,
-  userAvatar,
+  avatar
 }: {
   message: Message;
   avatar?: string;
-  userAvatar?: string;
 }) {
   const isUser = message.role === 'user';
   const [loading, setLoading] = useState(false);
@@ -19,7 +18,11 @@ export default function ChatBubble({
   const [modalMessage, setModalMessage] = useState('');
 
   const playAudio = async () => {
-    console.log('🔊 Play audio...');
+    setLoading(true);
+    await playAudioFromUri(message.audioUri!, (isPlaying) => {
+      setPlaying(isPlaying);
+      setLoading(false);
+    });
   };
 
   const onTranslate = () => {
@@ -36,10 +39,9 @@ export default function ChatBubble({
     <>
       <View style={[styles.container, { flexDirection: isUser ? 'row-reverse' : 'row' }]}>
         {/* Avatar */}
-        <Image
-          source={{ uri: isUser ? userAvatar : avatar }}
-          style={styles.avatar}
-        />
+        { !isUser && avatar &&
+          <Image source={{ uri: avatar }} style={styles.avatar}/>
+        }
 
         {/* Message Block */}
         <View style={[styles.bubble, isUser ? styles.user : styles.ai]}>
@@ -49,12 +51,12 @@ export default function ChatBubble({
             {/* Left Button */}
             {message.audioUri && !isUser && (
               <TouchableOpacity onPress={onTranslate} style={styles.iconButton}>
-                <Ionicons name="language" size={18} color="#333" />
+                <Ionicons name="language" size={15} color="#333" />
               </TouchableOpacity>
             )}
             {message.audioUri && isUser && (
               <TouchableOpacity onPress={onPractice} style={styles.iconButton}>
-                <MaterialCommunityIcons name="microphone-outline" size={18} color="#333" />
+                <MaterialCommunityIcons name="microphone-outline" size={15} color="#333" />
               </TouchableOpacity>
             )}
 
@@ -70,7 +72,7 @@ export default function ChatBubble({
                 ) : (
                   <Ionicons
                     name={playing ? 'pause' : 'volume-high'}
-                    size={18}
+                    size={15}
                     color="#333"
                   />
                 )}
