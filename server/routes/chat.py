@@ -49,7 +49,6 @@ async def chat(req: ChatRequest):
             model="gpt-3.5-turbo",
             messages=messages
         )
-
         reply_text = response.choices[0].message.content
 
         # Step 2: Generate speech
@@ -58,7 +57,6 @@ async def chat(req: ChatRequest):
             voice="nova",   # options: nova, shimmer, echo, etc.
             input=reply_text
         )
-
         filename = f"reply_{uuid.uuid4().hex}.mp3"
         filepath = f"static/audio/{filename}"
         with open(filepath, "wb") as f:

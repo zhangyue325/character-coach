@@ -1,14 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-
-# this is for testing
-# uvicorn main:app --reload
+import os
 
 from routes.chat import router as chat_router
 from routes.tts import router as text_to_speech
 
+# this is for testing
+# uvicorn main:app --reload
+
 app = FastAPI()
+os.makedirs("static/audio", exist_ok=True)
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
 app.add_middleware(
