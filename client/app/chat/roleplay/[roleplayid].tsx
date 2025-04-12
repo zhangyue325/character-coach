@@ -115,8 +115,7 @@ export default function RolePlayChatScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          characterId: rolePlay.character,
-          // messages: messages.slice(-5),
+          messages: messages.slice(-5),
           prompt: rolePlay.prompt,
         }),
       });
@@ -127,7 +126,7 @@ export default function RolePlayChatScreen() {
         type: 'text',
         text: data.reply || 'No reply received.',
         timestamp: Date.now(),
-        audioUri: 'https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3',
+        audioUri: data.audioUrl,
       };
 
       setMessages(prev => [...prev, aiMsg]);

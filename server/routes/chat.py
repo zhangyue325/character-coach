@@ -31,13 +31,13 @@ class ChatMessage(BaseModel):
     content: str
 
 class ChatRequest(BaseModel):
-    characterId: str
     messages: Optional[List[ChatMessage]] = []
+    prompt: str
 
 @router.post("")
 async def chat(req: ChatRequest):
     try:
-        prompt = "you are a english coach"
+        prompt = req.prompt
 
         recent_messages = req.messages[-5:] if req.messages else []
         messages = [{"role": "system", "content": prompt}] + [
