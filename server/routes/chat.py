@@ -25,15 +25,6 @@ if not firebase_admin._apps:
         "databaseURL": "https://character-coach-default-rtdb.asia-southeast1.firebasedatabase.app/"
     })
 
-# === Get character prompt from Firebase ===
-def get_prompt_by_id(character_id: str) -> str:
-    ref = db.reference(f"characters/{character_id}")
-    data = ref.get()
-
-    if data and "prompt" in data:
-        return data["prompt"]
-    raise HTTPException(status_code=404, detail="Character not found in Firebase")
-
 # === Models ===
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
@@ -46,7 +37,7 @@ class ChatRequest(BaseModel):
 @router.post("")
 async def chat(req: ChatRequest):
     try:
-        prompt = get_prompt_by_id(req.characterId)
+        prompt = "you are a english coach"
 
         recent_messages = req.messages[-5:] if req.messages else []
         messages = [{"role": "system", "content": prompt}] + [
@@ -81,7 +72,10 @@ async def chat(req: ChatRequest):
         })
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()  
+
         return JSONResponse({
-            "reply": f"⚠️ Error: {str(e)}",
+            "reply": f"⚠️ Error: {str(e)}", 
             "audioUrl": None
         })
