@@ -35,16 +35,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="resources"
-        options={{
-          title: 'Resources',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="me"
         options={{
           title: 'Me',

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,43 +7,77 @@ import {
   TouchableOpacity,
   Image,
   SafeAreaView,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
+import { ref, get } from 'firebase/database';
+import { db } from '../../firebase'; // adjust path to your Firebase config
 
-const testImageUrl = 'https://via.placeholder.com/300x200.png?text=Role+Play';
-
-const rolePlays = [
-  { title: 'Job interview', character_id: 'emma', character_name: 'Emma', image: { uri: testImageUrl }, id: 'job-interview' },
-  { title: 'Hotel check-in', character_id: 'max', character_name: 'Max', image: { uri: testImageUrl }, id: 'hotel-check-in' },
-  { title: 'Meeting new people', character_id: 'lily', character_name: 'Lily', image: { uri: testImageUrl }, id: 'meeting-new-people' },
-];
+type RolePlay = {
+  id: string;
+  title: string;
+  cover: string;
+  description: string;
+  character: string;
+  avatar: string;
+  prompt: string;
+};
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('For you');
+  const [rolePlays, setRolePlays] = useState<RolePlay[]>([]);
+  const [loading, setLoading] = useState(true);
+
   const tabs = ['For you', 'Popular', 'Practice again'];
 
-  const handlePress = (id: string, character_id: string) => {
+  useEffect(() => {
+    const fetchRolePlays = async () => {
+      try {
+        const snapshot = await get(ref(db, 'roleplay'));
+
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          const list = Object.entries(data).map(
+            ([key, value]: [string, any]) => ({
+              id: key,
+              ...value,
+            })
+          );
+          setRolePlays(list);
+        } else {
+          console.log('⚠️ No roleplay data found');
+          setRolePlays([]);
+        }
+      } catch (err) {
+        console.error('❌ Error fetching Firebase data:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRolePlays();
+  }, []);
+
+  const handlePress = (roleplayid: string) => {
     router.push({
-      pathname: '/chat/[id]',
-      params: {
-        id,
-        character_id,
-      },
+      pathname: '/chat/roleplay/[roleplayid]',
+      params: { roleplayid },
     } as const);
   };
 
-  const renderItem = ({ item }: { item: typeof rolePlays[0] }) => (
-    <TouchableOpacity style={styles.card} onPress={() => handlePress(item.id, item.character_id)}>
-      <Image source={item.image} style={styles.image} />
-      <Text style={styles.cardTitle}>{item.title}</Text>
-      <Text >{item.character_name}</Text>
+  const renderItem = ({ item }: { item: RolePlay }) => (
+    <TouchableOpacity style={styles.card} onPress={() => handlePress(item.id)}>
+      <Image source={{ uri: item.cover }} style={styles.image} />
+      <View style={styles.textContainer}>
+        <Text style={styles.cardTitle}>{item.title}</Text>
+        <Text style={styles.characterName}>{item.character}</Text>
+      </View>
     </TouchableOpacity>
   );
 
   return (
     <SafeAreaView style={styles.container}>
-      <Text style={styles.title}>Role-play</Text>
-
+      <br />
       <View style={styles.tabContainer}>
         {tabs.map((tab) => (
           <TouchableOpacity
@@ -58,14 +92,18 @@ export default function HomeScreen() {
         ))}
       </View>
 
-      <FlatList
-        data={rolePlays}
-        keyExtractor={(item) => item.id}
-        numColumns={2}
-        columnWrapperStyle={styles.row}
-        contentContainerStyle={styles.grid}
-        renderItem={renderItem}
-      />
+      {loading ? (
+        <ActivityIndicator size="large" color="#007AFF" />
+      ) : (
+        <FlatList
+          data={rolePlays}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={styles.row}
+          contentContainerStyle={styles.grid}
+          renderItem={renderItem}
+        />
+      )}
     </SafeAreaView>
   );
 }
@@ -73,10 +111,7 @@ export default function HomeScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 16, backgroundColor: '#fff' },
   title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
-  tabContainer: {
-    flexDirection: 'row',
-    marginBottom: 16,
-  },
+  tabContainer: { flexDirection: 'row', marginBottom: 16 },
   tab: {
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -84,22 +119,11 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     marginRight: 8,
   },
-  activeTab: {
-    backgroundColor: '#333',
-  },
-  tabText: {
-    color: '#333',
-  },
-  activeTabText: {
-    color: '#fff',
-  },
-  row: {
-    justifyContent: 'space-between',
-    marginBottom: 16,
-  },
-  grid: {
-    paddingBottom: 80,
-  },
+  activeTab: { backgroundColor: '#333' },
+  tabText: { color: '#333' },
+  activeTabText: { color: '#fff' },
+  row: { justifyContent: 'space-between', marginBottom: 16 },
+  grid: { paddingBottom: 80 },
   card: {
     width: '48%',
     borderRadius: 12,
@@ -111,9 +135,16 @@ const styles = StyleSheet.create({
     height: 120,
     backgroundColor: '#e0e0e0',
   },
-  cardTitle: {
+  textContainer: {
     padding: 8,
+  },
+  cardTitle: {
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
+    marginBottom: 4,
+  },
+  characterName: {
+    fontSize: 14,
+    color: '#666',
   },
 });

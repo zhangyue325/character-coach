@@ -10,66 +10,77 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
-  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ref, get } from 'firebase/database';
-import { db } from '../../firebase';
+import { db } from '../../../firebase';
 
-import ChatBubble from './ChatBubble';
-import ChatInput from './ChatInput';
-import { getMessages, saveMessages, Message } from './messageStorage';
-import { SERVER_URL } from '../../config';
+import ChatBubble from '../../chat/ChatBubble';
+import ChatInput from '../../chat/ChatInput';
+import { getMessages, saveMessages, Message } from '../../chat/messageStorage';
+import { SERVER_URL } from '../../../config';
 
-type Character = {
+type RolePlay = {
   id: string;
-  name: string;
-  role: string;
+  title: string;
+  description: string;
+  character: string;
   avatar: string;
   prompt: string;
-  greet: string;
+  cover: string;
+  greet: string
 };
 
-export default function CharacterChatScreen() {
-  const { id } = useLocalSearchParams();
+export default function RolePlayChatScreen() {
+  const { roleplayid } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
-
-  const [character, setCharacter] = useState<Character | null>(null);
+ 
+  const [rolePlay, setRolePlay] = useState<RolePlay | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const fetchCharacter = async (charId: string): Promise<Character> => {
-    const snapshot = await get(ref(db, `characters/${charId}`));
-    if (!snapshot.exists()) throw new Error('Character not found');
+  const fetchRolePlay = async (id: string): Promise<RolePlay> => {
+    const snapshot = await get(ref(db, `roleplay/${id}`));
+    if (!snapshot.exists()) throw new Error('Roleplay not found');
     return snapshot.val();
   };
 
   useEffect(() => {
-    if (!id || typeof id !== 'string') return;
+    if (!roleplayid || typeof roleplayid !== 'string') return;
 
     const init = async () => {
       try {
-        const data = await fetchCharacter(id);
-        setCharacter(data);
+        const data = await fetchRolePlay(roleplayid);
+        setRolePlay(data);
+        if (messages.length === 0 && data.greet) {
+          const greetingMsg: Message = {
+            role: 'assistant',
+            type: 'text',
+            text: data.greet,
+            timestamp: Date.now(),
+          };
+          setMessages([greetingMsg]);
+        }
+    
       } catch (err) {
-        console.error('❌ Failed to load character:', err);
+        console.error('❌ Failed to load roleplay:', err);
       }
     };
 
     init();
-  }, [id]);
+  }, [roleplayid]);
 
-  // this is
+  // load navigation
   useEffect(() => {
-    if (!character || typeof id !== 'string') return;
+    if (rolePlay === null) return;
 
     navigation.setOptions({
       headerTitleAlign: 'center',
       headerTitle: () => (
-        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{character.name}</Text>
+        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{rolePlay.character}</Text>
       ),
       headerLeft: () => (
         <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 10 }}>
@@ -78,39 +89,23 @@ export default function CharacterChatScreen() {
       ),
       headerRight: () => (
         <Image
-          source={{ uri: character.avatar }}
+          source={{ uri: rolePlay.avatar }}
           style={{ width: 30, height: 30, borderRadius: 15, marginRight: 10 }}
         />
       ),
     });
 
-    const loadHistory = async () => {
-      const stored = await getMessages(id);
-      if (stored.length > 0) {
-        setMessages(stored);
-      } else {
-        setMessages([
-          {
-            role: 'assistant',
-            type: 'text',
-            text: character.greet,
-            timestamp: Date.now(),
-          },
-        ]);
-      }
-    };
-
-    loadHistory();
-  }, [character]);
+    // history ignored here
+  }, [rolePlay]);
 
   useEffect(() => {
-    if (id && messages.length > 0 && typeof id === 'string') {
-      saveMessages(id, messages);
+    if (roleplayid && messages.length > 0 && typeof roleplayid === 'string') {
+      saveMessages(roleplayid, messages);
     }
   }, [messages]);
 
   const sendMessage = async () => {
-    if (!input.trim() || !character || typeof id !== 'string') return;
+    if (!input.trim() || !rolePlay || typeof roleplayid !== 'string') return;
 
     const userMsg: Message = {
       role: 'user',
@@ -118,6 +113,8 @@ export default function CharacterChatScreen() {
       text: input,
       timestamp: Date.now(),
     };
+
+    console.log('📤 Sending user message:', userMsg);
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
@@ -128,8 +125,9 @@ export default function CharacterChatScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          characterId: id,
+          characterId: rolePlay.character,
           messages: messages.slice(-5),
+          prompt: rolePlay.prompt,
         }),
       });
 
@@ -143,7 +141,7 @@ export default function CharacterChatScreen() {
 
       setMessages(prev => [...prev, aiMsg]);
     } catch (err) {
-      console.error('❌ Error from backend:', err);
+      console.error('❌ Backend error:', err);
       setMessages(prev => [
         ...prev,
         {
@@ -157,18 +155,14 @@ export default function CharacterChatScreen() {
       setLoading(false);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 300);
     }
+
   };
 
-  const handleVoicePress = () => {
-    Alert.alert('🎤 Voice mode', 'Start voice input (recording not implemented yet)');
-    // You can replace this with voice SDK logic (e.g., react-native-voice)
-  };
-
-  if (!character) {
+  if (!rolePlay) {
     return (
       <SafeAreaView style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
         <ActivityIndicator size="large" />
-        <Text>Loading character...</Text>
+        <Text>Loading role play...</Text>
       </SafeAreaView>
     );
   }
@@ -187,7 +181,7 @@ export default function CharacterChatScreen() {
             renderItem={({ item }) => (
               <ChatBubble
                 message={item}
-                avatar={item.role === 'assistant' ? character.avatar : undefined}
+                avatar={item.role === 'assistant' ? rolePlay.avatar : undefined}
               />
             )}
             keyExtractor={(_, index) => index.toString()}
@@ -199,11 +193,9 @@ export default function CharacterChatScreen() {
             onSend={sendMessage}
             onStartVoice={() => {
               console.log('🎙️ Start recording...');
-              // TODO: Start voice SDK recording
             }}
             onStopVoice={() => {
               console.log('🛑 Stop recording...');
-              // TODO: Stop recording and process result
             }}
             loading={loading}
           />
