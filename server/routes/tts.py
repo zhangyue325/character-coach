@@ -9,8 +9,6 @@ load_dotenv()
 app = FastAPI()
 router = APIRouter()
 
-openai.api_key = "YOUR_OPENAI_API_KEY"
-
 @router.post("")
 async def text_to_speech(request: Request):
     data = await request.json()
