@@ -28,7 +28,8 @@ type RolePlay = {
   avatar: string;
   prompt: string;
   cover: string;
-  greet: string
+  greet: string;
+  greet_audio: string
 };
 
 export default function RolePlayChatScreen() {
@@ -61,6 +62,7 @@ export default function RolePlayChatScreen() {
             type: 'text',
             text: data.greet,
             timestamp: Date.now(),
+            audioUri: data.greet_audio,
           };
           setMessages([greetingMsg]);
         }
@@ -137,6 +139,7 @@ export default function RolePlayChatScreen() {
         type: 'text',
         text: data.reply || 'No reply received.',
         timestamp: Date.now(),
+        audioUri: data.audioUrl || undefined,
       };
 
       setMessages(prev => [...prev, aiMsg]);
