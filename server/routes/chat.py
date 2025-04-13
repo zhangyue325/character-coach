@@ -65,7 +65,7 @@ async def chat(req: ChatRequest):
         audio_url = f"/static/audio/{filename}"
 
         return JSONResponse({
-            "reply": reply_text,
+            "test": reply_text,
             "audioUrl": audio_url
         })
 
@@ -74,6 +74,6 @@ async def chat(req: ChatRequest):
         traceback.print_exc()  
 
         return JSONResponse({
-            "reply": f"⚠️ Error: {str(e)}", 
+            "test": f"⚠️ Error: {str(e)}", 
             "audioUrl": None
         })
