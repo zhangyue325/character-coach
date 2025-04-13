@@ -109,9 +109,31 @@ export default function RolePlayChatScreen() {
         playsInSilentModeIOS: true,
       });
 
-      const { recording } = await Audio.Recording.createAsync(
-        Audio.RecordingOptionsPresets.HIGH_QUALITY
-      );
+      const { recording } = await Audio.Recording.createAsync({
+        android: {
+          extension: '.m4a',
+          outputFormat: Audio.AndroidOutputFormat.MPEG_4,
+          audioEncoder: Audio.AndroidAudioEncoder.AAC,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+        },
+        ios: {
+          extension: '.m4a',
+          outputFormat: Audio.IOSOutputFormat.MPEG4AAC,
+          audioQuality: Audio.IOSAudioQuality.HIGH,
+          sampleRate: 44100,
+          numberOfChannels: 2,
+          bitRate: 128000,
+          linearPCMBitDepth: 16,
+          linearPCMIsBigEndian: false,
+          linearPCMIsFloat: false,
+        },
+        web: {
+          mimeType: 'audio/webm',
+          bitsPerSecond: 128000,
+        },
+      });    
 
       setRecording(recording);
     } catch (err) {
@@ -120,20 +142,29 @@ export default function RolePlayChatScreen() {
   };
 
   // Stop voice recording
-  const onStopVoice = async () => {
-    try {
-      console.log('🛑 Stop recording');
-      if (!recording) return;
+const onStopVoice = async () => {
+  try {
+    console.log('🛑 Stop recording');
+    if (!recording) return;
 
-      await recording.stopAndUnloadAsync();
-      const uri = recording.getURI();
-      console.log('🎧 Saved to', uri);
-      setRecordedUri(uri);
-      setRecording(null);
-    } catch (err) {
-      console.error('Failed to stop recording:', err);
+    await recording.stopAndUnloadAsync();
+    const uri = recording.getURI();
+    console.log('🎧 Saved to', uri);
+    setRecordedUri(uri);
+    setRecording(null);
+
+    // Immediately submit the audio
+    if (uri) {
+      onSubmit({
+        text: '', // Empty text; the backend transcription will handle this
+        audio: uri,
+        mode: 'voice',
+      });
     }
-  };
+  } catch (err) {
+    console.error('Failed to stop recording:', err);
+  }
+};
 
   // Handle submission from ChatInput
   const onSubmit = async ({

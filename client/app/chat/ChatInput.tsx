@@ -40,16 +40,12 @@ export default function ChatInput({
   };
 
   const handleSend = () => {
-    if (mode === 'text') {
-      if (input.trim()) {
-        onSubmit({ text: input.trim(), audio: null, mode: 'text' });
-      }
-    } else {
-      if (recordedUri) {
-        onSubmit({ text: 'dummy text', audio: recordedUri, mode: 'voice' });
-      }
+    if (mode === 'text' && input.trim()) {
+      onSubmit({ text: input.trim(), audio: null, mode: 'text' });
     }
+    // Remove audio handling here since voice will auto-submit
   };
+  
 
   return (
     <View style={styles.container}>
@@ -80,7 +76,7 @@ export default function ChatInput({
       <TouchableOpacity
         style={[styles.sendButton, loading && { opacity: 0.5 }]}
         onPress={handleSend}
-        disabled={loading || (mode === 'text' && !input.trim())}
+        disabled={loading || (mode === 'text' && !input.trim()) || mode === 'voice'}
       >
         <Ionicons name="send" size={20} color="#fff" />
       </TouchableOpacity>
