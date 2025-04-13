@@ -19,7 +19,6 @@ import ChatBubble from '../../chat/ChatBubble';
 import ChatInput from '../../chat/ChatInput';
 import { playAudioFromUri } from '../../chat/audioPlay';
 import { transcribeAudio } from '../AudioToText'; 
-import { getMessages, saveMessages } from '../../chat/messageStorage';
 import { SERVER_URL } from '../../../config';
 import { db } from '../../../firebase';
 
@@ -227,10 +226,13 @@ const onStopVoice = async () => {
       });
 
       const data = await res.json();
+      console.log(data);
       
       // Disable typing indicator after a delay for more natural feel
       setTimeout(() => {
         setIsTyping(false);
+
+        
         
         const aiMsg: Message = {
           role: 'assistant',
