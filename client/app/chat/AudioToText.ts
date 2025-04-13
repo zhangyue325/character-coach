@@ -1,6 +1,6 @@
 export const transcribeAudio = async (uri: string, serverUrl: string) => {
     const fileName = uri.split('/').pop()!;
-    const fileType = 'audio/mp3'; // or 'audio/m4a' if you're recording m4a
+    const fileType = 'audio/m4a'; 
   
     const formData = new FormData();
     formData.append('file', {
@@ -20,11 +20,11 @@ export const transcribeAudio = async (uri: string, serverUrl: string) => {
     const data = await response.json();
   
     if (!response.ok) {
-      throw new Error(data?.reply || 'Transcription failed');
+      throw new Error(data?.text || 'Transcription failed');
     }
   
     return {
-      text: data.reply,
+      text: data.text,
       audioUrl: `${serverUrl}${data.audioUrl}`,
     };
   };

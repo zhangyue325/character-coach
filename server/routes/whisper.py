@@ -39,6 +39,6 @@ async def transcribe_audio(file: UploadFile = File(...)):
 
     except Exception as e:
         return JSONResponse({
-            "reply": f"⚠️ Error: {str(e)}", 
+            "text": f"⚠️ Error: {str(e)}", 
             "audioUrl": None
         })

@@ -235,7 +235,7 @@ const onStopVoice = async () => {
         const aiMsg: Message = {
           role: 'assistant',
           type: 'text',
-          content: data.reply || 'No reply received.',
+          content: data.text || 'No text received.',
           timestamp: Date.now(),
           audioUri: `${SERVER_URL}${data.audioUrl}` || '',
         };
