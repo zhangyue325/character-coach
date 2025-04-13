@@ -16,7 +16,7 @@ import { ref, get } from 'firebase/database';
 import { Audio } from 'expo-av';
 
 import ChatBubble from '../../chat/ChatBubble';
-import ChatInput from '../../chat/ChatInputTest';
+import ChatInput from '../../chat/ChatInput';
 import { playAudioFromUri } from '../../chat/audioPlay';
 import { transcribeAudio } from '../AudioToText'; 
 import { getMessages, saveMessages } from '../../chat/messageStorage';
@@ -37,6 +37,7 @@ export default function RolePlayChatScreen() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [isTyping, setIsTyping] = useState(false);
 
   // Load roleplay data
   useEffect(() => {
@@ -50,17 +51,23 @@ export default function RolePlayChatScreen() {
         setRolePlay(data);
 
         if (messages.length === 0 && data.greet) {
-          const greetingMsg: Message = {
-            role: 'assistant',
-            type: 'text',
-            content: data.greet,
-            timestamp: Date.now(),
-            audioUri: data.greetaudio ?? '',
-          };
-          setMessages([greetingMsg]);
-          if (data.greetaudio) {
-            await playAudioFromUri(data.greetaudio);
-          }
+          // Show typing indicator briefly before adding the greeting message
+          setIsTyping(true);
+          setTimeout(() => {
+            const greetingMsg: Message = {
+              role: 'assistant',
+              type: 'text',
+              content: data.greet,
+              timestamp: Date.now(),
+              audioUri: data.greetaudio ?? '',
+            };
+            setMessages([greetingMsg]);
+            setIsTyping(false);
+            
+            if (data.greetaudio) {
+              playAudioFromUri(data.greetaudio);
+            }
+          }, 1500); // Show typing for 1.5 seconds
         }
       } catch (err) {
         console.error('❌ Failed to load roleplay:', err);
@@ -159,14 +166,17 @@ export default function RolePlayChatScreen() {
       type: 'text',
       content: userText,
       timestamp: Date.now(),
-      audioUri: finalAudioUri ?? '',
+      audioUri: finalAudioUri || null,
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
     setRecordedUri(null);
 
+    // Show AI typing indicator
+    setIsTyping(true);
     setLoading(true);
+    
     try {
       const formattedMessages = [...messages, userMsg].slice(-5).map(m => ({
         role: m.role,
@@ -186,20 +196,28 @@ export default function RolePlayChatScreen() {
       });
 
       const data = await res.json();
-      const aiMsg: Message = {
-        role: 'assistant',
-        type: 'text',
-        content: data.reply || 'No reply received.',
-        timestamp: Date.now(),
-        audioUri: `${SERVER_URL}${data.audioUrl}` || '',
-      };
+      
+      // Disable typing indicator after a delay for more natural feel
+      setTimeout(() => {
+        setIsTyping(false);
+        
+        const aiMsg: Message = {
+          role: 'assistant',
+          type: 'text',
+          content: data.reply || 'No reply received.',
+          timestamp: Date.now(),
+          audioUri: `${SERVER_URL}${data.audioUrl}` || '',
+        };
 
-      setMessages(prev => [...prev, aiMsg]);
-      if (aiMsg.audioUri) {
-        await playAudioFromUri(aiMsg.audioUri);
-      }
+        setMessages(prev => [...prev, aiMsg]);
+        if (aiMsg.audioUri) {
+          playAudioFromUri(aiMsg.audioUri);
+        }
+      }, 1000);
+      
     } catch (err) {
       console.error('❌ Backend error:', err);
+      setIsTyping(false);
       setMessages(prev => [
         ...prev,
         {
@@ -243,6 +261,25 @@ export default function RolePlayChatScreen() {
             )}
             keyExtractor={(_, index) => index.toString()}
             contentContainerStyle={{ padding: 16 }}
+            ListFooterComponent={() => (
+              <>
+                {/* Show typing indicator when AI is responding */}
+                {isTyping && (
+                  <ChatBubble
+                    message={{ role: 'assistant', content: '', type: 'text', timestamp: Date.now() }}
+                    avatar={rolePlay.avatar}
+                    isTyping={true}
+                  />
+                )}
+                {/* Show recording indicator when user is recording */}
+                {recording && (
+                  <ChatBubble
+                    message={{ role: 'user', content: '', type: 'text', timestamp: Date.now() }}
+                    isRecording={true}
+                  />
+                )}
+              </>
+            )}
           />
           <ChatInput
             input={input}

@@ -24,7 +24,7 @@ export const transcribeAudio = async (uri: string, serverUrl: string) => {
     }
   
     return {
-      text: data.text,
+      text: data.reply,
       audioUrl: `${serverUrl}${data.audioUrl}`,
     };
   };

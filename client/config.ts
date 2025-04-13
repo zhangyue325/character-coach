@@ -1,1 +1,1 @@
-export const SERVER_URL = "https://character-coach.onrender.com";
+export const SERVER_URL = "http://character-coach.onrender.com/";

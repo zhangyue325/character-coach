@@ -17,10 +17,10 @@ client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 # === Models ===
 class ChatMessage(BaseModel):
     role: Literal["user", "assistant"]
-    type: str
+    type: Optional[str] = "text"
     content: str
-    audioUri: str
-    timestamp: int
+    audioUri: Optional[str] = ""         
+    timestamp: Optional[int] = None
 
 class ChatRequest(BaseModel):
     messages: Optional[List[ChatMessage]] = []

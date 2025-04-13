@@ -14,6 +14,6 @@ export type Message = {
   role: 'user' | 'assistant';
   type: 'text' | 'audio';
   content: string;
-  audioUri?: string;
+  audioUri?: string | null;
   timestamp: number;
 };

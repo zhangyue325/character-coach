@@ -1,70 +1,117 @@
+import { View, StyleSheet, Animated, Easing } from 'react-native';
 import React, { useEffect, useRef } from 'react';
-import { Animated, Easing, View, StyleSheet } from 'react-native';
 
-export default function TypingBubble() {
-  const dot1 = useRef(new Animated.Value(0)).current;
-  const dot2 = useRef(new Animated.Value(0)).current;
-  const dot3 = useRef(new Animated.Value(0)).current;
-
-  const createAnimation = (dot: Animated.Value, delay: number) =>
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(dot, {
-          toValue: 1,
-          duration: 300,
-          delay,
-          useNativeDriver: true,
-          easing: Easing.linear,
-        }),
-        Animated.timing(dot, {
-          toValue: 0.3,
-          duration: 300,
-          useNativeDriver: true,
-          easing: Easing.linear,
-        }),
-      ])
-    );
+export default function TypingBubble({ visible }: { visible: boolean }) {
+  // Create three animated values for each dot
+  const dot1Opacity = useRef(new Animated.Value(0)).current;
+  const dot2Opacity = useRef(new Animated.Value(0)).current;
+  const dot3Opacity = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    createAnimation(dot1, 0).start();
-    createAnimation(dot2, 150).start();
-    createAnimation(dot3, 300).start();
-  }, []);
+    if (visible) {
+      // Create the animation sequence
+      const animateDots = () => {
+        Animated.sequence([
+          // Reset opacities
+          Animated.timing(dot1Opacity, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot2Opacity, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          Animated.timing(dot3Opacity, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+          // Dot 1 appears
+          Animated.timing(dot1Opacity, {
+            toValue: 1,
+            duration: 200,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          // Dot 2 appears
+          Animated.timing(dot2Opacity, {
+            toValue: 1,
+            duration: 200,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          // Dot 3 appears
+          Animated.timing(dot3Opacity, {
+            toValue: 1,
+            duration: 200,
+            easing: Easing.ease,
+            useNativeDriver: true,
+          }),
+          // Short pause
+          Animated.delay(300),
+        ]).start(() => {
+          // Loop the animation
+          if (visible) {
+            animateDots();
+          }
+        });
+      };
+
+      animateDots();
+    } else {
+      // Reset when not visible
+      dot1Opacity.setValue(0);
+      dot2Opacity.setValue(0);
+      dot3Opacity.setValue(0);
+    }
+  }, [visible, dot1Opacity, dot2Opacity, dot3Opacity]);
+
+  if (!visible) return null;
 
   return (
-    <View style={[styles.bubble, styles.ai]}>
-      <View style={styles.dotWrapper}>
-        <Animated.View style={[styles.dot, { opacity: dot1 }]} />
-        <Animated.View style={[styles.dot, { opacity: dot2 }]} />
-        <Animated.View style={[styles.dot, { opacity: dot3 }]} />
+    <View style={styles.container}>
+      <View style={styles.bubble}>
+        <View style={styles.dotsContainer}>
+          <Animated.View
+            style={[styles.dot, { opacity: dot1Opacity }]}
+          />
+          <Animated.View
+            style={[styles.dot, { opacity: dot2Opacity }]}
+          />
+          <Animated.View
+            style={[styles.dot, { opacity: dot3Opacity }]}
+          />
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  container: {
+    marginBottom: 10,
+    flexDirection: 'row',
+  },
   bubble: {
     padding: 12,
     borderRadius: 10,
     backgroundColor: '#f1f0f0',
     alignSelf: 'flex-start',
-    maxWidth: '50%',
-    marginLeft: 10,
-    marginVertical: 4,
+    minWidth: 60,
   },
-  ai: {
-    backgroundColor: '#f1f0f0',
-  },
-  dotWrapper: {
+  dotsContainer: {
     flexDirection: 'row',
-    alignItems: 'center',
     justifyContent: 'center',
+    alignItems: 'center',
+    height: 16,
   },
   dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
+    width: 8,
+    height: 8,
+    borderRadius: 4,
     backgroundColor: '#888',
-    marginHorizontal: 3,
+    marginHorizontal: 2,
   },
 });

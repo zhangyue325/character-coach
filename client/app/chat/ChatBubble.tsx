@@ -3,13 +3,18 @@ import React, { useState } from 'react';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import type { Message } from './types';
 import { playAudioFromUri } from './audioPlay';
+import TypingBubble from './TypingBubble';
 
 export default function ChatBubble({
   message,
-  avatar
+  avatar,
+  isTyping,
+  isRecording,
 }: {
   message: Message;
   avatar?: string;
+  isTyping?: boolean;
+  isRecording?: boolean;
 }) {
   const isUser = message.role === 'user';
   const [loading, setLoading] = useState(false);
@@ -18,8 +23,10 @@ export default function ChatBubble({
   const [modalMessage, setModalMessage] = useState('');
 
   const playAudio = async () => {
+    if (!message.audioUri) return;
+    
     setLoading(true);
-    await playAudioFromUri(message.audioUri!, (isPlaying) => {
+    await playAudioFromUri(message.audioUri, (isPlaying) => {
       setPlaying(isPlaying);
       setLoading(false);
     });
@@ -35,35 +42,69 @@ export default function ChatBubble({
     setModalVisible(true);
   };
 
+  // Helper function to check if audioUri is valid
+  const hasAudio = () => {
+    return message.audioUri && typeof message.audioUri === 'string' && message.audioUri.length > 0;
+  };
+
+  // Show typing indicator if this is an AI message and isTyping is true
+  if (!isUser && isTyping) {
+    return (
+      <View style={[styles.container, { flexDirection: 'row' }]}>
+        {avatar && (
+          <Image source={{ uri: avatar }} style={styles.avatar} />
+        )}
+        <TypingBubble visible={true} />
+      </View>
+    );
+  }
+
+  // Show recording indicator if this is a user message and isRecording is true
+  if (isUser && isRecording) {
+    return (
+      <View style={[styles.container, { flexDirection: 'row-reverse' }]}>
+        <View style={[styles.bubble, styles.user]}>
+          <View style={styles.recordingContainer}>
+            <ActivityIndicator size="small" color="#333" />
+            <Text style={styles.recordingText}>Recording...</Text>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <>
       <View style={[styles.container, { flexDirection: isUser ? 'row-reverse' : 'row' }]}>
         {/* Avatar */}
-        { !isUser && avatar &&
-          <Image source={{ uri: avatar }} style={styles.avatar}/>
-        }
+        {!isUser && avatar && (
+          <Image source={{ uri: avatar }} style={styles.avatar} />
+        )}
 
         {/* Message Block */}
         <View style={[styles.bubble, isUser ? styles.user : styles.ai]}>
-          {typeof message.content === 'string' && message.content.trim() !== '' && (
+          {typeof message.content === 'string' && message.content.trim() !== '' ? (
             <Text style={styles.text}>{message.content}</Text>
+          ) : (
+            <Text style={styles.text}>⚠️ Invalid or empty message</Text>
           )}
 
           <View style={styles.buttonRow}>
-            {/* Left Button */}
-            {message.audioUri && !isUser && (
+            {/* Left Button - Only show if valid audioUri exists */}
+            {hasAudio() && !isUser && (
               <TouchableOpacity onPress={onTranslate} style={styles.iconButton}>
                 <Ionicons name="language" size={15} color="#333" />
               </TouchableOpacity>
             )}
-            {message.audioUri && isUser && (
+            
+            {hasAudio() && isUser && (
               <TouchableOpacity onPress={onPractice} style={styles.iconButton}>
                 <MaterialCommunityIcons name="microphone-outline" size={15} color="#333" />
               </TouchableOpacity>
             )}
 
-            {/* Play Button */}
-            {message.audioUri && (
+            {/* Play Button - Only show if valid audioUri exists */}
+            {hasAudio() && (
               <TouchableOpacity
                 onPress={playAudio}
                 disabled={loading}
@@ -156,7 +197,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     alignItems: 'center',
-    maxHeight: '90%', // or set a fixed height like 200
+    maxHeight: '90%',
     minHeight: '90%',
     width: '100%',
   },
@@ -173,6 +214,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   closeButtonText: {
+    fontSize: 14,
+    color: '#333',
+  },
+  recordingContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 6,
+  },
+  recordingText: {
+    marginLeft: 8,
     fontSize: 14,
     color: '#333',
   },
