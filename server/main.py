@@ -24,4 +24,4 @@ app.add_middleware(
 
 app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 app.include_router(text_to_speech, prefix="/tts", tags=["TTS"])
-app.include_router(whisper_router, prefix="/whisper_router", tags=["Whisper"])
+app.include_router(whisper_router, prefix="/whisper", tags=["Whisper"])
