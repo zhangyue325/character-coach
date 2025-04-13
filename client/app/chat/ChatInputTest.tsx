@@ -13,19 +13,25 @@ import { Ionicons } from '@expo/vector-icons';
 type Props = {
   input: string;
   onChange: (text: string) => void;
-  onSend: () => void;
+  onSubmit: (payload: {
+    text: string;
+    audio: string | null;
+    mode: 'voice' | 'text';
+  }) => void;
   onStartVoice: (e: GestureResponderEvent) => void;
   onStopVoice: (e: GestureResponderEvent) => void;
   loading: boolean;
+  recordedUri?: string | null;
 };
 
 export default function ChatInput({
   input,
   onChange,
-  onSend,
+  onSubmit,
   onStartVoice,
   onStopVoice,
   loading,
+  recordedUri,
 }: Props) {
   const [mode, setMode] = useState<'voice' | 'text'>('voice');
 
@@ -33,14 +39,24 @@ export default function ChatInput({
     setMode(prev => (prev === 'voice' ? 'text' : 'voice'));
   };
 
+  const handleSend = () => {
+    if (mode === 'text') {
+      if (input.trim()) {
+        onSubmit({ text: input.trim(), audio: null, mode: 'text' });
+      }
+    } else {
+      if (recordedUri) {
+        onSubmit({ text: 'dummy text', audio: recordedUri, mode: 'voice' });
+      }
+    }
+  };
+
   return (
     <View style={styles.container}>
-      {/* Mode Switcher */}
       <TouchableOpacity style={styles.iconButton} onPress={toggleMode}>
         <Ionicons name={mode === 'voice' ? 'mic' : 'chatbubble'} size={24} color="#333" />
       </TouchableOpacity>
 
-      {/* Input Area */}
       <View style={styles.middle}>
         {mode === 'text' ? (
           <TextInput
@@ -61,10 +77,9 @@ export default function ChatInput({
         )}
       </View>
 
-      {/* Send Button */}
       <TouchableOpacity
         style={[styles.sendButton, loading && { opacity: 0.5 }]}
-        onPress={onSend}
+        onPress={handleSend}
         disabled={loading || (mode === 'text' && !input.trim())}
       >
         <Ionicons name="send" size={20} color="#fff" />
