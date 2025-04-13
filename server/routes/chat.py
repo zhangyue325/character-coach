@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 from typing import List, Literal, Optional
@@ -26,9 +26,24 @@ class ChatRequest(BaseModel):
     messages: Optional[List[ChatMessage]] = []
     prompt: str
 
+# Add an explicit OPTIONS handler for the chat endpoint
+@router.options("")
+async def options_chat():
+    return JSONResponse(
+        status_code=200,
+        content={"detail": "OK"},
+    )
+
 @router.post("")
-async def chat(req: ChatRequest):
+async def chat(req: ChatRequest, request: Request):
     try:
+        # Handle OPTIONS requests manually if needed
+        if request.method == "OPTIONS":
+            return JSONResponse(
+                status_code=200,
+                content={"detail": "OK"},
+            )
+            
         prompt = req.prompt
 
         recent_messages = req.messages[-5:] if req.messages else []
