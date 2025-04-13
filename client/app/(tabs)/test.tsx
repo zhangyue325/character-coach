@@ -1,23 +1,23 @@
 import React, { useState } from 'react';
-import { View, Text, SafeAreaView, StyleSheet } from 'react-native';
-import ChatInput from '../chat/ChatInputTest'; // Adjust path
-import { Audio } from 'expo-av';
+import { View, Button, Text, ActivityIndicator, Alert } from 'react-native';
 
-export default function ChatInputTest() {
-  const [input, setInput] = useState('');
+import { Audio } from 'expo-av';
+import { transcribeAudio } from '../chat/AudioToText'; // adjust import path
+import { SERVER_URL } from '../../config'; // update to your server
+
+export default function WhisperTest() {
   const [recording, setRecording] = useState<Audio.Recording | null>(null);
   const [recordedUri, setRecordedUri] = useState<string | null>(null);
-  const [lastSubmitted, setLastSubmitted] = useState<{
-    text: string;
-    audio: string | null;
-    mode: 'voice' | 'text';
-  } | null>(null);
+  const [result, setResult] = useState<string>('');
+  const [loading, setLoading] = useState(false);
 
-  const onStartVoice = async () => {
+  const startRecording = async () => {
     try {
-      console.log('🎤 Start recording');
       const { granted } = await Audio.requestPermissionsAsync();
-      if (!granted) throw new Error('Permission not granted');
+      if (!granted) {
+        Alert.alert('Permission denied');
+        return;
+      }
 
       await Audio.setAudioModeAsync({
         allowsRecordingIOS: true,
@@ -29,78 +29,56 @@ export default function ChatInputTest() {
       );
 
       setRecording(recording);
+      console.log('🎙️ Recording started');
     } catch (err) {
-      console.error('Failed to start recording:', err);
+      console.error('Failed to start recording', err);
     }
   };
 
-  const onStopVoice = async () => {
+  const stopRecording = async () => {
     try {
-      console.log('🛑 Stop recording');
       if (!recording) return;
-
       await recording.stopAndUnloadAsync();
       const uri = recording.getURI();
-      console.log('🎧 Saved to', uri);
+      console.log('✅ Recording saved to', uri);
       setRecordedUri(uri);
       setRecording(null);
     } catch (err) {
-      console.error('Failed to stop recording:', err);
+      console.error('Failed to stop recording', err);
     }
   };
 
-  const onSubmit = ({ text, audio, mode }: { text: string; audio: string | null; mode: 'voice' | 'text' }) => {
-    console.log('✅ Submitted:', { text, audio, mode });
-    setLastSubmitted({ text, audio, mode });
-    setInput('');
-    setRecordedUri(null);
+  const handleTranscribe = async () => {
+    if (!recordedUri) {
+      Alert.alert('No recording to transcribe');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const result = await transcribeAudio(recordedUri, SERVER_URL);
+      setResult(result.text);
+      console.log('🧠 Transcribed:', result);
+    } catch (err: any) {
+      console.error('❌ Transcription error:', err);
+      Alert.alert('Error', err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <SafeAreaView style={styles.container}>
-      <View style={styles.previewBox}>
-        <Text style={styles.label}>🧪 ChatInput Test (with real audio)</Text>
-        {lastSubmitted && (
-          <View style={styles.output}>
-            <Text>Mode: {lastSubmitted.mode}</Text>
-            <Text>Text: {lastSubmitted.text}</Text>
-            <Text>Audio: {lastSubmitted.audio ?? 'None'}</Text>
-          </View>
-        )}
-      </View>
-
-      <ChatInput
-        input={input}
-        onChange={setInput}
-        onSubmit={onSubmit}
-        onStartVoice={onStartVoice}
-        onStopVoice={onStopVoice}
-        loading={false}
-        recordedUri={recordedUri}
+    <View style={{ padding: 20 }}>
+      <Button
+        title={recording ? 'Stop Recording' : 'Start Recording'}
+        onPress={recording ? stopRecording : startRecording}
       />
-    </SafeAreaView>
+      <View style={{ height: 16 }} />
+      <Button title="Transcribe" onPress={handleTranscribe} disabled={!recordedUri || loading} />
+      <View style={{ marginTop: 20 }}>
+        {loading && <ActivityIndicator />}
+        {result ? <Text>📝 Transcript: {result}</Text> : null}
+      </View>
+    </View>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'flex-end',
-    backgroundColor: '#fafafa',
-  },
-  previewBox: {
-    flex: 1,
-    padding: 20,
-    justifyContent: 'flex-start',
-  },
-  label: {
-    fontSize: 18,
-    marginBottom: 10,
-    fontWeight: 'bold',
-  },
-  output: {
-    backgroundColor: '#eee',
-    padding: 12,
-    borderRadius: 10,
-  },
-});

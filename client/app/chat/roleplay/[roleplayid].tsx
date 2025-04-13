@@ -13,55 +13,55 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { ref, get } from 'firebase/database';
+import { Audio } from 'expo-av';
 
 import ChatBubble from '../../chat/ChatBubble';
-import ChatInput from '../../chat/ChatInput';
+import ChatInput from '../../chat/ChatInputTest';
 import { playAudioFromUri } from '../../chat/audioPlay';
-import { getMessages, saveMessages  } from '../../chat/messageStorage';
+import { transcribeAudio } from '../AudioToText'; 
+import { getMessages, saveMessages } from '../../chat/messageStorage';
 import { SERVER_URL } from '../../../config';
 import { db } from '../../../firebase';
 
-import type { RolePlay, Message }  from '../types';
-
+import type { RolePlay, Message } from '../types';
 
 export default function RolePlayChatScreen() {
   const { roleplayid } = useLocalSearchParams();
   const navigation = useNavigation();
   const router = useRouter();
   const flatListRef = useRef<FlatList>(null);
- 
+
   const [rolePlay, setRolePlay] = useState<RolePlay | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [recording, setRecording] = useState<Audio.Recording | null>(null);
+  const [recordedUri, setRecordedUri] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  const fetchRolePlay = async (id: string): Promise<RolePlay> => {
-    const snapshot = await get(ref(db, `roleplay/${id}`));
-    if (!snapshot.exists()) throw new Error('Roleplay not found');
-    return snapshot.val();
-  };
-
+  // Load roleplay data
   useEffect(() => {
     if (!roleplayid || typeof roleplayid !== 'string') return;
 
     const init = async () => {
       try {
-        const data = await fetchRolePlay(roleplayid);
+        const snapshot = await get(ref(db, `roleplay/${roleplayid}`));
+        if (!snapshot.exists()) throw new Error('Roleplay not found');
+        const data = snapshot.val();
         setRolePlay(data);
+
         if (messages.length === 0 && data.greet) {
           const greetingMsg: Message = {
             role: 'assistant',
             type: 'text',
             content: data.greet,
             timestamp: Date.now(),
-            audioUri: data.greetaudio,
+            audioUri: data.greetaudio ?? '',
           };
+          setMessages([greetingMsg]);
           if (data.greetaudio) {
             await playAudioFromUri(data.greetaudio);
           }
-          setMessages([greetingMsg]);
         }
-    
       } catch (err) {
         console.error('❌ Failed to load roleplay:', err);
       }
@@ -70,15 +70,12 @@ export default function RolePlayChatScreen() {
     init();
   }, [roleplayid]);
 
-  // load navigation
+  // Setup navigation header
   useEffect(() => {
-    if (rolePlay === null) return;
-
+    if (!rolePlay) return;
     navigation.setOptions({
       headerTitleAlign: 'center',
-      headerTitle: () => (
-        <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{rolePlay.character}</Text>
-      ),
+      headerTitle: () => <Text style={{ fontSize: 16, fontWeight: 'bold' }}>{rolePlay.character}</Text>,
       headerLeft: () => (
         <TouchableOpacity onPress={() => router.back()} style={{ paddingHorizontal: 10 }}>
           <Ionicons name="arrow-back" size={24} color="black" />
@@ -93,35 +90,92 @@ export default function RolePlayChatScreen() {
     });
   }, [rolePlay]);
 
-  // useEffect(() => {
-  //   if (roleplayid && messages.length > 0 && typeof roleplayid === 'string') {
-  //     saveMessages(roleplayid, messages);
-  //   }
-  // }, [messages]);
+  // Start voice recording
+  const onStartVoice = async () => {
+    try {
+      console.log('🎤 Start recording');
+      const { granted } = await Audio.requestPermissionsAsync();
+      if (!granted) throw new Error('Permission not granted');
 
-  const sendMessage = async () => {
-    if (!input.trim() || !rolePlay || typeof roleplayid !== 'string') return;
+      await Audio.setAudioModeAsync({
+        allowsRecordingIOS: true,
+        playsInSilentModeIOS: true,
+      });
 
+      const { recording } = await Audio.Recording.createAsync(
+        Audio.RecordingOptionsPresets.HIGH_QUALITY
+      );
+
+      setRecording(recording);
+    } catch (err) {
+      console.error('Failed to start recording:', err);
+    }
+  };
+
+  // Stop voice recording
+  const onStopVoice = async () => {
+    try {
+      console.log('🛑 Stop recording');
+      if (!recording) return;
+
+      await recording.stopAndUnloadAsync();
+      const uri = recording.getURI();
+      console.log('🎧 Saved to', uri);
+      setRecordedUri(uri);
+      setRecording(null);
+    } catch (err) {
+      console.error('Failed to stop recording:', err);
+    }
+  };
+
+  // Handle submission from ChatInput
+  const onSubmit = async ({
+    text,
+    audio,
+    mode,
+  }: {
+    text: string;
+    audio: string | null;
+    mode: 'voice' | 'text';
+  }) => {
+    if (!rolePlay || typeof roleplayid !== 'string') return;
+
+    let userText = text;
+    let finalAudioUri = audio;
+
+    if (mode === 'voice' && audio) {
+      try {
+        const result = await transcribeAudio(audio, SERVER_URL);
+        userText = result.text || 'Voice transcription failed';
+        finalAudioUri = result.audioUrl;
+      } catch (err) {
+        console.error('❌ Whisper transcription failed:', err);
+        userText = '⚠️ Failed to transcribe voice';
+      }
+    }
+  
     const userMsg: Message = {
       role: 'user',
       type: 'text',
-      content: input,
+      content: userText,
       timestamp: Date.now(),
-      audioUri: 'https://file-examples.com/storage/fee47d30d267f6756977e34/2017/11/file_example_MP3_700KB.mp3'
+      audioUri: finalAudioUri ?? '',
     };
 
     setMessages(prev => [...prev, userMsg]);
     setInput('');
-    setLoading(true);
+    setRecordedUri(null);
 
-    const formattedMessages = messages.slice(-5).map((m) => ({
-      role: m.role,
-      type: m.type,
-      content: m.content ?? '',
-      audioUri: m.audioUri ?? '',
-      timestamp: m.timestamp,
-    }));
+    setLoading(true);
     try {
+      const formattedMessages = [...messages, userMsg].slice(-5).map(m => ({
+        role: m.role,
+        type: m.type,
+        content: m.content,
+        audioUri: m.audioUri,
+        timestamp: m.timestamp,
+      }));
+
       const res = await fetch(`${SERVER_URL}/chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,7 +213,6 @@ export default function RolePlayChatScreen() {
       setLoading(false);
       setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 300);
     }
-
   };
 
   if (!rolePlay) {
@@ -194,14 +247,11 @@ export default function RolePlayChatScreen() {
           <ChatInput
             input={input}
             onChange={setInput}
-            onSend={sendMessage}
-            onStartVoice={() => {
-              console.log('🎙️ Start recording...');
-            }}
-            onStopVoice={() => {
-              console.log('🛑 Stop recording...');
-            }}
+            onSubmit={onSubmit}
+            onStartVoice={onStartVoice}
+            onStopVoice={onStopVoice}
             loading={loading}
+            recordedUri={recordedUri}
           />
         </View>
       </KeyboardAvoidingView>
