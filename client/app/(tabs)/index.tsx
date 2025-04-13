@@ -8,45 +8,43 @@ import {
   Image,
   SafeAreaView,
   ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { router } from 'expo-router';
 import { ref, get } from 'firebase/database';
-import { db } from '../../firebase'; // adjust path to your Firebase config
-
+import { db } from '../../firebase';
 import type { RolePlay } from '../chat/types';
+
+const SPACING = 12;
+const screenWidth = Dimensions.get('window').width;
+const CARD_WIDTH = (screenWidth - SPACING * 3) / 2;
 
 export default function HomeScreen() {
   const [activeTab, setActiveTab] = useState('For you');
   const [rolePlays, setRolePlays] = useState<RolePlay[]>([]);
   const [loading, setLoading] = useState(true);
-
-  const tabs = ['For you', 'Popular', 'Practice again'];
+  const tabs = ['For you', 'Popular'];
 
   useEffect(() => {
     const fetchRolePlays = async () => {
       try {
         const snapshot = await get(ref(db, 'roleplay'));
-
         if (snapshot.exists()) {
           const data = snapshot.val();
-          const list = Object.entries(data).map(
-            ([key, value]: [string, any]) => ({
-              id: key,
-              ...value,
-            })
-          );
+          const list = Object.entries(data).map(([key, value]: [string, any]) => ({
+            id: key,
+            ...value,
+          }));
           setRolePlays(list);
         } else {
-          console.log('⚠️ No roleplay data found');
           setRolePlays([]);
         }
       } catch (err) {
-        console.error('❌ Error fetching Firebase data:', err);
+        console.error('❌ Firebase error:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchRolePlays();
   }, []);
 
@@ -57,8 +55,16 @@ export default function HomeScreen() {
     } as const);
   };
 
-  const renderItem = ({ item }: { item: RolePlay }) => (
-    <TouchableOpacity style={styles.card} onPress={() => handlePress(item.id)}>
+  const renderItem = ({ item, index }: { item: RolePlay; index: number }) => (
+    <TouchableOpacity
+      onPress={() => handlePress(item.id)}
+      style={[
+        styles.card,
+        {
+          marginRight: index % 2 === 0 ? SPACING : 0, // left card in each row
+        },
+      ]}
+    >
       <Image source={{ uri: item.cover }} style={styles.image} />
       <View style={styles.textContainer}>
         <Text style={styles.cardTitle}>{item.title}</Text>
@@ -90,9 +96,8 @@ export default function HomeScreen() {
           data={rolePlays}
           keyExtractor={(item) => item.id}
           numColumns={2}
-          columnWrapperStyle={styles.row}
-          contentContainerStyle={styles.grid}
           renderItem={renderItem}
+          contentContainerStyle={styles.grid}
         />
       )}
     </SafeAreaView>
@@ -100,9 +105,16 @@ export default function HomeScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, padding: 16, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: 'bold', marginBottom: 12 },
-  tabContainer: { flexDirection: 'row', marginBottom: 16 },
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+  },
+  tabContainer: {
+    flexDirection: 'row',
+    paddingHorizontal: SPACING,
+    marginBottom: 16,
+    marginTop: 16,
+  },
   tab: {
     paddingVertical: 6,
     paddingHorizontal: 12,
@@ -110,16 +122,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#f0f0f0',
     marginRight: 8,
   },
-  activeTab: { backgroundColor: '#333' },
-  tabText: { color: '#333' },
-  activeTabText: { color: '#fff' },
-  row: { justifyContent: 'space-between', marginBottom: 16 },
-  grid: { paddingBottom: 80 },
+  activeTab: {
+    backgroundColor: '#0096FF',
+  },
+  tabText: {
+    color: '#333',
+  },
+  activeTabText: {
+    color: '#fff',
+  },
+  grid: {
+    paddingHorizontal: SPACING,
+    paddingBottom: 80,
+  },
   card: {
-    width: '48%',
+    width: CARD_WIDTH,
     borderRadius: 12,
     overflow: 'hidden',
     backgroundColor: '#f9f9f9',
+    marginBottom: SPACING,
   },
   image: {
     width: '100%',

@@ -1,57 +1,46 @@
 import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 
+const getTabBarIcon = (
+  filledName: keyof typeof Ionicons.glyphMap,
+  outlineName: keyof typeof Ionicons.glyphMap
+) => ({
+  color,
+  size,
+  focused,
+}: {
+  color: string;
+  size: number;
+  focused: boolean;
+}) => (
+  <Ionicons name={focused ? filledName : outlineName} size={size} color={color} />
+);
+
 export default function TabLayout() {
   return (
     <Tabs>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Role-play',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
+          title: 'Role-plays',
+          headerTitleAlign: 'center',
+          tabBarIcon: getTabBarIcon('people', 'people-outline'),
         }}
       />
       <Tabs.Screen
         name="chats"
         options={{
           title: 'Chats',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="home-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="discover"
-        options={{
-          title: 'Discover',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          headerTitleAlign: 'center',
+          tabBarIcon: getTabBarIcon('chatbubble', 'chatbubble-outline'),
         }}
       />
       <Tabs.Screen
         name="me"
         options={{
           title: 'Me',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="test"
-        options={{
-          title: 'test',
-          headerTitleAlign: 'center', 
-          tabBarIcon: ({ color, size }: { color: string; size: number }) => (
-            <Ionicons name="person-outline" size={size} color={color} />
-          ),
+          headerTitleAlign: 'center',
+          tabBarIcon: getTabBarIcon('person', 'person-outline'),
         }}
       />
     </Tabs>
