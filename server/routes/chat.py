@@ -57,7 +57,7 @@ async def chat(req: ChatRequest):
             voice="nova",   # options: nova, shimmer, echo, etc.
             input=reply_text
         )
-        filename = f"reply_{uuid.uuid4().hex}.mp4"
+        filename = f"reply_{uuid.uuid4().hex}.mp3"
         filepath = f"static/audio/{filename}"
         with open(filepath, "wb") as f:
             f.write(tts_response.content)
