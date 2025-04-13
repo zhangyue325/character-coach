@@ -19,3 +19,4 @@ export default function Index() {
 
   return <Redirect href={user ? '/(tabs)' : '/welcome'} />;
 }
+
