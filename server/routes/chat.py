@@ -35,15 +35,8 @@ async def options_chat():
     )
 
 @router.post("")
-async def chat(req: ChatRequest, request: Request):
+async def chat(req: ChatRequest):
     try:
-        # Handle OPTIONS requests manually if needed
-        if request.method == "OPTIONS":
-            return JSONResponse(
-                status_code=200,
-                content={"detail": "OK"},
-            )
-            
         prompt = req.prompt
 
         recent_messages = req.messages[-5:] if req.messages else []

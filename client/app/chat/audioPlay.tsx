@@ -2,6 +2,7 @@ import { Audio } from 'expo-av';
 
 let currentSound: Audio.Sound | null = null;
 
+
 export async function playAudioFromUri(
   uri: string,
   onPlaybackStatusUpdate?: (playing: boolean) => void
