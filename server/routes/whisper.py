@@ -16,7 +16,7 @@ async def transcribe_audio(file: UploadFile = File(...)):
     try:
         # Step 1: Save the uploaded audio file
         file_id = str(uuid.uuid4())
-        filename = f"{file_id}.mp3"
+        filename = f"{file_id}.m4a"
         save_path = f"static/audio/{filename}"
 
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
