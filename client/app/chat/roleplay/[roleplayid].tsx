@@ -226,14 +226,11 @@ const onStopVoice = async () => {
       });
 
       const data = await res.json();
-      console.log(data);
       
       // Disable typing indicator after a delay for more natural feel
       setTimeout(() => {
         setIsTyping(false);
 
-        
-        
         const aiMsg: Message = {
           role: 'assistant',
           type: 'text',
