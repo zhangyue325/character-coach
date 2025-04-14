@@ -13,6 +13,7 @@ from routes.whisper import router as whisper_router
 
 app = FastAPI()
 os.makedirs("static/audio", exist_ok=True)
+app.mount("/static", StaticFiles(directory="static"), name="static")
 
 # IMPORTANT: CORS middleware must be added BEFORE mounting static files
 # to ensure OPTIONS requests are handled correctly
@@ -25,18 +26,6 @@ app.add_middleware(
     expose_headers=["Content-Type", "Authorization"],
     max_age=600,  # Cache preflight requests for 10 minutes
 )
-
-# Add explicit handler for OPTIONS requests
-@app.options("/{full_path:path}")
-async def options_handler(request: Request, full_path: str):
-    return JSONResponse(
-        status_code=200,
-        content={"detail": "OK"},
-    )
-
-# Now mount static files AFTER CORS middleware
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
 app.include_router(chat_router, prefix="/chat", tags=["Chat"])
 app.include_router(text_to_speech, prefix="/tts", tags=["TTS"])
 app.include_router(whisper_router, prefix="/whisper", tags=["Whisper"])
