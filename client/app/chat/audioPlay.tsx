@@ -9,6 +9,7 @@ export async function playAudioFromUri(
   onPlaybackStatusUpdate?: (playing: boolean) => void
 ) {
   try {
+    // Unload any currently playing audio
     if (currentSound) {
       await currentSound.stopAsync();
       await currentSound.unloadAsync();
@@ -17,18 +18,30 @@ export async function playAudioFromUri(
 
     let sourceUri = uri;
 
-    // ✅ iOS workaround: download to local first
+    // ✅ iOS workaround: download audio file first
     if (Platform.OS === 'ios' && uri.startsWith('http')) {
       try {
-        const localUri = FileSystem.documentDirectory + 'temp-audio.mp3';
+        const fileName = `temp-audio-${Date.now()}.mp3`;
+        const localUri = FileSystem.documentDirectory + fileName;
         const downloadRes = await FileSystem.downloadAsync(uri, localUri);
+
+        if (downloadRes.status !== 200) {
+          throw new Error(`Download failed with status ${downloadRes.status}`);
+        }
+
         sourceUri = downloadRes.uri;
-        console.log('✅ Audio downloaded to', sourceUri);
+        console.log('✅ Audio downloaded to:', sourceUri);
+
+        // Optional: small delay to ensure iOS can read the file
+        await new Promise((res) => setTimeout(res, 300));
       } catch (downloadErr) {
         console.error('❌ Failed to download audio before playback:', downloadErr);
+        if (onPlaybackStatusUpdate) onPlaybackStatusUpdate(false);
+        return;
       }
     }
 
+    // ✅ Load and play audio
     const { sound } = await Audio.Sound.createAsync(
       { uri: sourceUri },
       { shouldPlay: true }
@@ -36,9 +49,13 @@ export async function playAudioFromUri(
 
     currentSound = sound;
 
+    // ✅ Playback status handling
     sound.setOnPlaybackStatusUpdate((status: AVPlaybackStatus) => {
       if (!status.isLoaded) {
-        console.error(`Playback error: not loaded. URI: ${uri}, Platform: ${Platform.OS}`, status);
+        console.error(
+          `Playback error: not loaded. URI: ${uri}, Platform: ${Platform.OS}`,
+          status
+        );
         if (onPlaybackStatusUpdate) onPlaybackStatusUpdate(false);
         return;
       }

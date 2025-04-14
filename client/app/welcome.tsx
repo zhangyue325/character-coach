@@ -4,7 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import GoogleLoginButton from './login/googleLogin';
 
 export default function WelcomeScreen() {
-  const router = useRouter();
+  const router = useRouter();  
 
   return (
     <SafeAreaView style={styles.container}>

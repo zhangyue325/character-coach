@@ -12,7 +12,9 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.zyy0621.charactercoach",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "NSPhotoLibraryUsageDescription": "This app may access your photo library to let you choose or upload images to your profile.",
+        "NSSpeechRecognitionUsageDescription": "Speech recognition is used to transcribe your voice messages for chat functionality."
       }
     },
     "android": {
